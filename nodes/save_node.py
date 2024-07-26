@@ -35,7 +35,7 @@ class SaveImageNode:
         }
     RETURN_TYPES = ()
     FUNCTION = "save"
-    CATEGORY = "file"
+    CATEGORY = "File"
     OUTPUT_NODE = True
     
     def save(self, images, path, quality):
@@ -59,7 +59,7 @@ class SaveImagesNode:
         }
     RETURN_TYPES = ()
     FUNCTION = "save"
-    CATEGORY = "file"
+    CATEGORY = "File"
     OUTPUT_NODE = True
     
     def save(self, images, path, prefix, format, quality):

@@ -58,7 +58,7 @@ class LoadImageNode:
 
     RETURN_TYPES = ("IMAGE", "MASK")
     FUNCTION = "load"
-    CATEGORY = "file"
+    CATEGORY = "tbox"
 
     def load(self, path):
         print(path)
