@@ -1,0 +1,4 @@
+annotator_ckpts_path: "../../models/annotator"
+custom_temp_path: "../../temp"
+USE_SYMLINKS: False
+EP_list: ["CUDAExecutionProvider", "DirectMLExecutionProvider", "OpenVINOExecutionProvider", "ROCMExecutionProvider", "CPUExecutionProvider"]

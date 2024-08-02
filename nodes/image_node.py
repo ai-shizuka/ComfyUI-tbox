@@ -1,13 +1,13 @@
 
 from PIL import Image, ImageSequence, ImageOps
 import torch
-import requests
 import nodes
 from io import BytesIO
 import os
 import comfy.utils
 import numpy as np
 
+# https://github.com/bronkula/comfyui-fitsize
 class ImageSizeNode: 
     @classmethod
     def INPUT_TYPES(cls):
