@@ -1,0 +1,14 @@
+[project]
+name = "comfyui-tbox"
+description = "Nodes:ImageLoader, ImageSaver, ImagesSaver, ImageResize, ImageSize."
+version = "1.0.0"
+license = {file = "LICENSE"}
+
+[project.urls]
+Repository = "https://github.com/ai-shizuka/ComfyUI-tbox"
+#  Used by Comfy Registry https://comfyregistry.org
+
+[tool.comfy]
+PublisherId = ""
+DisplayName = "ComfyUI-tbox"
+Icon = ""
