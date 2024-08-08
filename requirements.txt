@@ -6,3 +6,5 @@ scikit-image
 insightface
 ultralytics
 onnxruntime-gpu
+imageio_ffmpeg
+pykalman

@@ -1,10 +1,7 @@
-from PIL import Image, ImageSequence, ImageOps
-import torch
-import requests
-from io import BytesIO
 import os
-import numpy as np
 import time
+import numpy as np
+from PIL import Image, ImageSequence, ImageOps
 
 #from load_node import load_image, pil2tensor
 
@@ -29,16 +26,16 @@ class SaveImageNode:
         return {
             "required": {
                 "images": ("IMAGE",),
-                "path": ("STRING", {"multiline": True, "dynamicPrompts": False}),
+                "path": ("STRING", {"multiline": False, "dynamicPrompts": False}),
                 "quality": ([100, 95, 90, 85, 80, 75, 70, 60, 50], {"default": 100}),
             }
         }
     RETURN_TYPES = ()
-    FUNCTION = "save"
-    CATEGORY = "tbox"
+    FUNCTION = "save_image"
+    CATEGORY = "tbox/Image"
     OUTPUT_NODE = True
     
-    def save(self, images, path, quality):
+    def save_image(self, images, path, quality):
         format = os.path.splitext(path)[1][1:]
         image = images[0] 
         img = Image.fromarray((255. * image.cpu().numpy()).astype(np.uint8))
@@ -51,18 +48,18 @@ class SaveImagesNode:
         return {
             "required": {
                 "images": ("IMAGE",),
-                "path": ("STRING", {"multiline": True, "dynamicPrompts": False}),
+                "path": ("STRING", {"multiline": False, "dynamicPrompts": False}),
                 "prefix": ("STRING", {"default": "image"}),
                 "format": (["PNG", "JPG", "WEBP", "BMP"],),
                 "quality": ([100, 95, 90, 85, 80, 75, 70, 60, 50], {"default": 100}),
             }
         }
     RETURN_TYPES = ()
-    FUNCTION = "save"
-    CATEGORY = "tbox"
+    FUNCTION = "save_image"
+    CATEGORY = "tbox/Image"
     OUTPUT_NODE = True
     
-    def save(self, images, path, prefix, format, quality):
+    def save_image(self, images, path, prefix, format, quality):
         format = format.lower()            
         for i, image in enumerate(images):
             img = Image.fromarray((255. * image.cpu().numpy()).astype(np.uint8))
@@ -81,15 +78,3 @@ class SaveImagesNode:
             filename = os.path.join(save_dir, f"{prefix}_{index+1}_{counter}.{format}")
             counter += 1
         return filename
-    
-
-# if __name__ == "__main__":
-#     img, name = load_image("/Users/wadahana/workspace/AI/tbox.ai/data/tbox/task/20240704/50f524e9a28e63f9ecb5746f98353942/target.jpg")
-#     img_out, mask_out = pil2tensor(img)
-#     print(f'img_out shape: {img_out.shape}')
-#     # images = (img_out,)
-#     for image in img_out:
-#         print(f'image shape: {image.shape}')
-#         img1 = Image.fromarray((255. * image.cpu().numpy()).astype(np.uint8))
-#     save_image(img1, "/Users/wadahana/workspace/AI/tbox.ai/data/tbox/task/20240704/50f524e9a28e63f9ecb5746f98353942/output11.png", "png", 90)
-

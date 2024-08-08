@@ -4,19 +4,19 @@ from .utils import here
 
 sys.path.insert(0, str(Path(here, "src").resolve()))
 
-from .nodes.load_node import LoadImageNode
-from .nodes.save_node import SaveImageNode
-from .nodes.save_node import SaveImagesNode
-from .nodes.image_node import ImageResizeNode
-from .nodes.image_node import ImageSizeNode
-from .nodes.constrain_node import ConstrainImageNode
-from .nodes.midas_node import MIDAS_Depth_Map_Preprocessor
-from .nodes.dwpose_node import DWPose_Preprocessor, AnimalPose_Preprocessor
-from .nodes.densepose_node import DensePose_Preprocessor
+from .nodes.image.load_node import LoadImageNode
+from .nodes.image.save_node import SaveImageNode
+from .nodes.image.save_node import SaveImagesNode
+from .nodes.image.size_node import ImageResizeNode
+from .nodes.image.size_node import ImageSizeNode
+from .nodes.image.size_node import ConstrainImageNode
+from .nodes.video.load_node import LoadVideoNode
+from .nodes.video.save_node import SaveVideoNode
 
-
-
-print(f'here>> {here} ')
+from .nodes.preprocessor.midas_node import MIDAS_Depth_Map_Preprocessor
+from .nodes.preprocessor.dwpose_node import DWPose_Preprocessor, AnimalPose_Preprocessor
+from .nodes.preprocessor.densepose_node import DensePose_Preprocessor
+LoadVideoNode
 
 NODE_CLASS_MAPPINGS = {
     "ImageLoader": LoadImageNode,
@@ -24,6 +24,8 @@ NODE_CLASS_MAPPINGS = {
     "ImagesSaver": SaveImagesNode,
     "ImageResize": ImageResizeNode,
     "ImageSize": ImageSizeNode,
+    "VideoLoader": LoadVideoNode,
+    "VideoSaver": SaveVideoNode,
     "ConstrainImageNode": ConstrainImageNode,
     "DensePosePreprocessor": DensePose_Preprocessor,
     "DWPosePreprocessor": DWPose_Preprocessor,
@@ -37,6 +39,8 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "ImagesSaver": "Image List Save",
     "ImageResize": "Image Resize",
     "ImageSize": "Image Size",
+    "VideoLoader": "Video Load",
+    "VideoSaver": "Video Save",
     "ConstrainImageNode": "Image Constrain",
     "DensePosePreprocessor": "DensePose Estimator",
     "DWPosePreprocessor": "DWPose Estimator",

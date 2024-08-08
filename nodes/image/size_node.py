@@ -1,6 +1,9 @@
+
+
 import torch
+import comfy.utils
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageSequence, ImageOps
 
 class ConstrainImageNode:
     """
@@ -22,7 +25,7 @@ class ConstrainImageNode:
 
     RETURN_TYPES = ("IMAGE",)
     FUNCTION = "constrain_image"
-    CATEGORY = "tbox"
+    CATEGORY = "tbox/Image"
     OUTPUT_IS_LIST = (True,)
 
     def constrain_image(self, images, max_width, max_height, min_width, min_height, crop_if_required):
@@ -61,3 +64,58 @@ class ConstrainImageNode:
             results.append(resized_image)
                 
         return (results,)
+    
+# https://github.com/bronkula/comfyui-fitsize
+class ImageSizeNode: 
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "image": ("IMAGE", ),
+            }
+        }
+    
+    RETURN_TYPES = ("INT", "INT", "INT")
+    RETURN_NAMES = ("width", "height", "count")
+    FUNCTION = "get_size"
+    CATEGORY = "tbox/Image"
+    def get_size(self, image):
+        print(f'shape of image:{image.shape}')
+        return (image.shape[2], image.shape[1], image[0])
+
+
+
+class ImageResizeNode:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "image": ("IMAGE", ),
+                "method": (["nearest", "bilinear", "bicubic", "area", "nearest-exact", "lanczos"],),
+            },
+        "optional": {
+                "width": ("INT,FLOAT", { "default": 0.0, "step": 0.1 }),
+                "height": ("INT,FLOAT", { "default": 0.0, "step": 0.1 }),
+            },
+        }
+
+    RETURN_TYPES = ("IMAGE",)
+
+    FUNCTION = "resize"
+    CATEGORY = "tbox/Image"
+    
+    def resize(self, image, method, width, height):
+        print(f'shape of image:{image.shape}, resolution:{width}x{height} type: {type(width)}, {type(height)}')
+        if width == 0 and height == 0:
+            s = image
+        else:
+            samples = image.movedim(-1,1)
+            if width == 0:
+                width = max(1, round(samples.shape[3] * height / samples.shape[2]))
+            elif height == 0:
+                height = max(1, round(samples.shape[2] * width / samples.shape[3]))
+
+            s = comfy.utils.common_upscale(samples, width, height, method, True)
+            s = s.movedim(1,-1)
+        return (s,)
+    

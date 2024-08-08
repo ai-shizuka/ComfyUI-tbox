@@ -1,9 +1,16 @@
-from PIL import Image, ImageSequence, ImageOps
+
+import os
+import cv2
 import torch
 import requests
-from io import BytesIO
-import os
+import itertools
+import folder_paths
+import psutil
 import numpy as np
+from comfy.utils import common_upscale
+from io import BytesIO
+from PIL import Image, ImageSequence, ImageOps
+
 
 
 def pil2tensor(img):
@@ -57,14 +64,15 @@ class LoadImageNode:
 
 
     RETURN_TYPES = ("IMAGE", "MASK")
-    FUNCTION = "load"
-    CATEGORY = "tbox"
+    FUNCTION = "load_image"
+    CATEGORY = "tbox/Image"
 
-    def load(self, path):
+    def load_image(self, path):
         print(path)
         img, name = load_image(path)
         img_out, mask_out = pil2tensor(img)
         return (img_out, mask_out)
+
 
 
 if __name__ == "__main__":

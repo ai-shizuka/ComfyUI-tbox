@@ -13,6 +13,12 @@ TEMP_DIR = tempfile.gettempdir()
 ANNOTATOR_CKPTS_PATH = os.path.join(Path(__file__).parents[2], 'ckpts')
 USE_SYMLINKS = False
 
+
+BIGMIN = -(2**53-1)
+BIGMAX = (2**53-1)
+
+DIMMAX = 8192
+
 try:
     ANNOTATOR_CKPTS_PATH = os.environ['AUX_ANNOTATOR_CKPTS_PATH']
 except:
@@ -178,3 +184,21 @@ def HWC3(x):
         y = color * alpha + 255.0 * (1.0 - alpha)
         y = y.clip(0, 255).astype(np.uint8)
         return y
+
+def strip_path(path):
+    #This leaves whitespace inside quotes and only a single "
+    #thus ' ""test"' -> '"test'
+    #consider path.strip(string.whitespace+"\"")
+    #or weightier re.fullmatch("[\\s\"]*(.+?)[\\s\"]*", path).group(1)
+    path = path.strip()
+    if path.startswith("\""):
+        path = path[1:]
+    if path.endswith("\""):
+        path = path[:-1]
+    return path
+def hash_path(path):
+    if path is None:
+        return "input"
+    if is_url(path):
+        return "url"
+    return calculate_file_hash(strip_path(path))
