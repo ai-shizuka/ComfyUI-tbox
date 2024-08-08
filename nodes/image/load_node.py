@@ -68,8 +68,8 @@ class LoadImageNode:
     CATEGORY = "tbox/Image"
 
     def load_image(self, path):
-        print(path)
-        img, name = load_image(path)
+        filepaht = path.split('\n')[0]
+        img, name = load_image(filepaht)
         img_out, mask_out = pil2tensor(img)
         return (img_out, mask_out)
 

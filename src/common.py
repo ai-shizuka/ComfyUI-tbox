@@ -184,21 +184,4 @@ def HWC3(x):
         y = color * alpha + 255.0 * (1.0 - alpha)
         y = y.clip(0, 255).astype(np.uint8)
         return y
-
-def strip_path(path):
-    #This leaves whitespace inside quotes and only a single "
-    #thus ' ""test"' -> '"test'
-    #consider path.strip(string.whitespace+"\"")
-    #or weightier re.fullmatch("[\\s\"]*(.+?)[\\s\"]*", path).group(1)
-    path = path.strip()
-    if path.startswith("\""):
-        path = path[1:]
-    if path.endswith("\""):
-        path = path[:-1]
-    return path
-def hash_path(path):
-    if path is None:
-        return "input"
-    if is_url(path):
-        return "url"
-    return calculate_file_hash(strip_path(path))
+    

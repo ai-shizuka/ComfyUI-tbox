@@ -188,15 +188,15 @@ class SaveVideoNode:
         ffmpeg_formats = get_video_formats()
         return {
             "required": {
-                "path": ("STRING", {"multiline": False, "dynamicPrompts": False}),
-                "frame_rate": ("FLOAT", {"default": 8, "min": 1, "step": 1},),
-                "loop_count": ("INT", {"default": 0, "min": 0, "max": 100, "step": 1}),
+                "path": ("STRING", {"multiline": True, "dynamicPrompts": False}),
+#                "frame_rate": ("FLOAT", {"default": 8, "min": 1, "step": 1},),
                 "format": (ffmpeg_formats,),
                 "pingpong": ("BOOLEAN", {"default": False}),
             },
             "optional": {
                 "images": ("IMAGE",),
                 "audio": ("AUDIO",),
+                "frame_rate": ("INT,FLOAT", { "default": 25.0, "step": 1.0, "min": 1.0, "max": 60.0 }),
             },
         }
 
@@ -208,8 +208,7 @@ class SaveVideoNode:
     def save_video(
         self,
         path,
-        frame_rate: int,
-        loop_count: int,
+        frame_rate=25,
         images=None,
         format="video/h264-mp4",
         pingpong=False,
@@ -221,13 +220,18 @@ class SaveVideoNode:
         if isinstance(images, torch.Tensor) and images.size(0) == 0:
             return {}
         
+        if frame_rate < 1:
+            frame_rate = 1
+        elif frame_rate > 120:
+            frame_rate = 120
+            
         num_frames = len(images)
 
 
         first_image = images[0]
         images = iter(images)
         
-        file_path = os.path.abspath(path)
+        file_path = os.path.abspath(path.split('\n')[0])
         output_dir = os.path.dirname(file_path)
         filename = os.path.basename(file_path)
         name, extension = os.path.splitext(filename)

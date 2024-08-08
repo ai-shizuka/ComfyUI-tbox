@@ -26,7 +26,7 @@ class SaveImageNode:
         return {
             "required": {
                 "images": ("IMAGE",),
-                "path": ("STRING", {"multiline": False, "dynamicPrompts": False}),
+                "path": ("STRING", {"multiline": True, "dynamicPrompts": False}),
                 "quality": ([100, 95, 90, 85, 80, 75, 70, 60, 50], {"default": 100}),
             }
         }
@@ -36,10 +36,11 @@ class SaveImageNode:
     OUTPUT_NODE = True
     
     def save_image(self, images, path, quality):
-        format = os.path.splitext(path)[1][1:]
+        filepaht = path.split('\n')[0]
+        format = os.path.splitext(filepaht)[1][1:]
         image = images[0] 
         img = Image.fromarray((255. * image.cpu().numpy()).astype(np.uint8))
-        save_image(img, path, format, quality)
+        save_image(img, filepaht, format, quality)
         return {}
         
 class SaveImagesNode:

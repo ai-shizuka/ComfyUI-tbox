@@ -93,7 +93,7 @@ class ImageResizeNode:
                 "image": ("IMAGE", ),
                 "method": (["nearest", "bilinear", "bicubic", "area", "nearest-exact", "lanczos"],),
             },
-        "optional": {
+            "optional": {
                 "width": ("INT,FLOAT", { "default": 0.0, "step": 0.1 }),
                 "height": ("INT,FLOAT", { "default": 0.0, "step": 0.1 }),
             },
