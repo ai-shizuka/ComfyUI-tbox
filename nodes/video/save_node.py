@@ -14,7 +14,7 @@ from pathlib import Path
 from PIL import Image, ExifTags
 from PIL.PngImagePlugin import PngInfo
 from .ffmpeg import ffmpeg_path, gifski_path
-from ..utils import tensor_to_bytes, tensor_to_shorts
+from ..utils import tensor_to_bytes, tensor_to_shorts, requeue_workflow
 
 
 
@@ -53,19 +53,7 @@ def get_video_formats():
     formats = []
     for format_name in folder_paths.get_filename_list("VHS_video_formats"):
         format_name = format_name[:-5]
-        #print(f'format_name: {format_name}')
-        video_format_path = folder_paths.get_full_path("VHS_video_formats", format_name + ".json")
-        #with open(video_format_path, 'r') as stream:
-        #    video_format = json.load(stream)
-
-        # widgets = [w[0] for w in gen_format_widgets(video_format)]
-        # print(f'widgets: {widgets}')
-        # if (len(widgets) > 0):
-        #     formats.append(["video/" + format_name, widgets])
-        # else:
         formats.append("video/" + format_name)
-            
-    #print(f'formats: {formats}')
     return formats
 
 def gifski_process(args, video_format, file_path, env):
@@ -174,6 +162,7 @@ def apply_format_widgets(format_name, kwargs):
     video_format_path = folder_paths.get_full_path("VHS_video_formats", format_name + ".json")
     with open(video_format_path, 'r') as stream:
         video_format = json.load(stream)
+
     for w in gen_format_widgets(video_format):
         assert(w[0][0] in kwargs)
         if len(w[0]) > 3:
@@ -189,7 +178,6 @@ class SaveVideoNode:
         return {
             "required": {
                 "path": ("STRING", {"multiline": True, "dynamicPrompts": False}),
-#                "frame_rate": ("FLOAT", {"default": 8, "min": 1, "step": 1},),
                 "format": (ffmpeg_formats,),
                 "pingpong": ("BOOLEAN", {"default": False}),
             },
@@ -197,6 +185,11 @@ class SaveVideoNode:
                 "images": ("IMAGE",),
                 "audio": ("AUDIO",),
                 "frame_rate": ("INT,FLOAT", { "default": 25.0, "step": 1.0, "min": 1.0, "max": 60.0 }),
+                "meta_batch": ("BatchManager",),
+            },
+            "hidden": {
+                "prompt": "PROMPT",
+                "unique_id": "UNIQUE_ID"
             },
         }
 
@@ -213,6 +206,9 @@ class SaveVideoNode:
         format="video/h264-mp4",
         pingpong=False,
         audio=None,
+        prompt=None,
+        meta_batch=None,
+        unique_id=None,
         manual_format_widgets=None,
     ):
         if images is None:
@@ -227,7 +223,6 @@ class SaveVideoNode:
             
         num_frames = len(images)
 
-
         first_image = images[0]
         images = iter(images)
         
@@ -236,16 +231,17 @@ class SaveVideoNode:
         filename = os.path.basename(file_path)
         name, extension = os.path.splitext(filename)
        
-        output_files = []
         output_process = None
 
         video_metadata = {}
-        # save first frame as png to keep metadata
-        jpgfile = os.path.join(output_dir, f'{name}.jpg')
-        Image.fromarray(tensor_to_bytes(first_image)).save(
-            jpgfile, "JPEG", quality=85,
-        )
-        output_files.append(jpgfile)
+        if prompt is not None:
+            video_metadata["prompt"] = prompt
+            
+        if meta_batch is not None and unique_id in meta_batch.outputs:
+            (counter, output_process) = meta_batch.outputs[unique_id]
+        else:
+            counter = 0 
+            output_process = None    
 
         format_type, format_ext = format.split("/")
 
@@ -256,7 +252,11 @@ class SaveVideoNode:
         #Acquire additional format_widget values
         kwargs = None
         if manual_format_widgets is None:
-            manual_format_widgets = {}
+            if prompt is not None:
+                kwargs = prompt[unique_id]['inputs']
+            else:
+                manual_format_widgets = {}
+        
         if kwargs is None:
             kwargs = get_format_widget_defaults(format_ext)
             missing = {}
@@ -267,7 +267,7 @@ class SaveVideoNode:
                     missing[k] = kwargs[k]
             if len(missing) > 0:
                 print("Extra format values were not provided, the following defaults will be used: " + str(kwargs) + "\nThis is likely due to usage of ComfyUI-to-python. These values can be manually set by supplying a manual_format_widgets argument")
-
+    
         video_format = apply_format_widgets(format_ext, kwargs)
         has_alpha = first_image.shape[-1] == 4
         dim_alignment = video_format.get("dim_alignment", 8)
@@ -286,35 +286,23 @@ class SaveVideoNode:
             new_dims = (-first_image.shape[1] % dim_alignment + first_image.shape[1],
                         -first_image.shape[0] % dim_alignment + first_image.shape[0])
             dimensions = f"{new_dims[0]}x{new_dims[1]}"
-            print("Output images were not of valid resolution and have had padding applied")
+            print(f"Output images were not of valid resolution and have had padding applied: {dimensions}")
         else:
             dimensions = f"{first_image.shape[1]}x{first_image.shape[0]}"
 
         if pingpong:
+            if meta_batch is not None:
+                print("pingpong is incompatible with batched output")
             images = to_pingpong(images)
-        if video_format.get('input_color_depth', '8bit') == '16bit':
-            images = map(tensor_to_shorts, images)
-            if has_alpha:
-                i_pix_fmt = 'rgba64'
-            else:
-                i_pix_fmt = 'rgb48'
-        else:
-            images = map(tensor_to_bytes, images)
-            if has_alpha:
-                i_pix_fmt = 'rgba'
-            else:
-                i_pix_fmt = 'rgb24'
-                
-        #file = f"{filename}_{counter:05}.{video_format['extension']}"
-        #file_path = os.path.join(full_output_folder, file)
         
-        bitrate_arg = []
-        bitrate = video_format.get('bitrate')
-        if bitrate is not None:
-            bitrate_arg = ["-b:v", str(bitrate) + "M" if video_format.get('megabit') == 'True' else str(bitrate) + "K"]
-        args = [ffmpeg_path, "-v", "error", "-f", "rawvideo", "-pix_fmt", i_pix_fmt,
-                "-s", dimensions, "-r", str(frame_rate), "-i", "-"] \
+        images = map(tensor_to_bytes, images)
+        if has_alpha:
+            i_pix_fmt = 'rgba'
+        else:
+            i_pix_fmt = 'rgb24'
                 
+        args = [ffmpeg_path, "-v", "error", "-f", "rawvideo", "-pix_fmt", i_pix_fmt,
+                "-s", dimensions, "-r", str(frame_rate), "-i", "-"]
 
         images = map(lambda x: x.tobytes(), images)
         env=os.environ.copy()
@@ -335,24 +323,31 @@ class SaveVideoNode:
             args = args[:13] + video_format['inputs_main_pass'] + args[13:]
 
         if output_process is None:
-          
-            args += video_format['main_pass'] + bitrate_arg
+           
+            args += video_format['main_pass'] 
             output_process = ffmpeg_process(args, video_format, video_metadata, file_path, env)
             #Proceed to first yield
             output_process.send(None)
+            if meta_batch is not None:
+                meta_batch.outputs[unique_id] = (0, output_process)
 
         for image in images:
             output_process.send(image)
-
-        #Close pipe and wait for termination.
-        try:
-            total_frames_output = output_process.send(None)
-            output_process.send(None)
-        except StopIteration:
-            pass
-
-        output_files.append(file_path)
-
+        if meta_batch is not None:
+            requeue_workflow((meta_batch.unique_id, not meta_batch.has_closed_inputs))
+        if meta_batch is None or meta_batch.has_closed_inputs:
+            #Close pipe and wait for termination.
+            try:
+                total_frames_output = output_process.send(None)
+                output_process.send(None)
+            except StopIteration:
+                pass
+            if meta_batch is not None:
+                meta_batch.outputs.pop(unique_id)
+                if len(meta_batch.outputs) == 0:
+                    meta_batch.reset()
+        else:
+            return {}
 
         a_waveform = None
         if audio is not None:
@@ -392,8 +387,10 @@ class SaveVideoNode:
                         + e.stderr.decode("utf-8"))
             if res.stderr:
                 print(res.stderr.decode("utf-8"), end="", file=sys.stderr)
-            output_files.append(output_file_with_audio_path)
-        
+
+        #else:
+            # RENAME 
+            
         return {}
     
     @classmethod

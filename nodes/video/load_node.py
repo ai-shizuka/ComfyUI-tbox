@@ -37,7 +37,7 @@ def target_size(width, height, force_size, custom_width, custom_height, downscal
     return (width, height)
 
 def cv_frame_generator(video, force_rate, frame_load_cap, skip_first_frames,
-                       select_every_nth):
+                       select_every_nth, meta_batch=None, unique_id=None):
     video_cap = cv2.VideoCapture(strip_path(video))
     if not video_cap.isOpened():
         raise ValueError(f"{video} could not be loaded with cv.")
@@ -62,7 +62,18 @@ def cv_frame_generator(video, force_rate, frame_load_cap, skip_first_frames,
         target_frame_time = 1/force_rate
 
     yield (width, height, fps, duration, total_frames, target_frame_time)
+    if total_frames > 0:
+        if force_rate != 0:
+            yieldable_frames = int(total_frames / fps * force_rate)
+        else:
+            yieldable_frames = total_frames
+        if frame_load_cap != 0:
+            yieldable_frames =  min(frame_load_cap, yieldable_frames)
+    else:
+        yieldable_frames = 0
 
+    if meta_batch is not None:
+        yield yieldable_frames
 
     time_offset=target_frame_time - base_frame_time
     while video_cap.isOpened():
@@ -107,6 +118,9 @@ def cv_frame_generator(video, force_rate, frame_load_cap, skip_first_frames,
         if frame_load_cap > 0 and frames_added >= frame_load_cap:
             break
 
+    if meta_batch is not None:
+        meta_batch.inputs.pop(unique_id)
+        meta_batch.has_closed_inputs = True
     if prev_frame is not None:
         yield prev_frame
         
@@ -117,14 +131,25 @@ def batched(it, n):
 def load_video_cv(video: str, force_rate: int, force_size: str,
                   custom_width: int,custom_height: int, frame_load_cap: int,
                   skip_first_frames: int, select_every_nth: int,
+                  meta_batch=None, unique_id=None,
                   memory_limit_mb=None):
 
-    gen = cv_frame_generator(video, force_rate, frame_load_cap, skip_first_frames,
-                                select_every_nth, )
-    (width, height, fps, duration, total_frames, target_frame_time) = next(gen)
+    if meta_batch is None or unique_id not in meta_batch.inputs:
+        gen = cv_frame_generator(video, force_rate, frame_load_cap, skip_first_frames,
+                                 select_every_nth, meta_batch, unique_id)
+        (width, height, fps, duration, total_frames, target_frame_time) = next(gen)
+
+        if meta_batch is not None:
+            meta_batch.inputs[unique_id] = (gen, width, height, fps, duration, total_frames, target_frame_time)
+            yieldable_frames = next(gen)
+            if yieldable_frames:
+                meta_batch.total_frames = min(meta_batch.total_frames, yieldable_frames)
+    else:
+        (gen, width, height, fps, duration, total_frames, target_frame_time) = meta_batch.inputs[unique_id]
 
     print(f'[{width}x{height}]@{fps} - duration:{duration}, total_frames: {total_frames}')
-    memory_limit = None
+    
+    memory_limit = memory_limit_mb
     if memory_limit_mb is not None:
         memory_limit *= 2 ** 20
     else:
@@ -134,14 +159,19 @@ def load_video_cv(video: str, force_rate: int, force_size: str,
             memory_limit = (psutil.virtual_memory().available + psutil.swap_memory().free) - 2 ** 27
         except:
             print("Failed to calculate available memory. Memory load limit has been disabled")
+            
     if memory_limit is not None:
-  
         #TODO: use better estimate for when vae is not None
         #Consider completely ignoring for load_latent case?
         max_loadable_frames = int(memory_limit//(width*height*3*(.1)))
       
-        original_gen = gen
-        gen = itertools.islice(gen, max_loadable_frames)
+        if meta_batch is not None:
+            if meta_batch.frames_per_batch > max_loadable_frames:
+                raise RuntimeError(f"Meta Batch set to {meta_batch.frames_per_batch} frames but only {max_loadable_frames} can fit in memory")
+            gen = itertools.islice(gen, meta_batch.frames_per_batch)
+        else:
+            original_gen = gen
+            gen = itertools.islice(gen, max_loadable_frames)
         
     downscale_ratio = 8
     frames_per_batch = (1920 * 1080 * 16) // (width * height) or 1
@@ -159,7 +189,7 @@ def load_video_cv(video: str, force_rate: int, force_size: str,
 
     #Some minor wizardry to eliminate a copy and reduce max memory by a factor of ~2
     images = torch.from_numpy(np.fromiter(gen, np.dtype((np.float32, (new_size[1], new_size[0], 3)))))
-    if  memory_limit is not None:
+    if meta_batch is None and memory_limit is not None:
         try:
             next(original_gen)
             raise RuntimeError(f"Memory limit hit after loading {len(images)} frames. Stopping execution.")
@@ -204,6 +234,12 @@ class LoadVideoNode:
                 "skip_first_frames": ("INT", {"default": 0, "min": 0, "max": BIGMAX, "step": 1}),
                 "select_every_nth": ("INT", {"default": 1, "min": 1, "max": BIGMAX, "step": 1}),
             },
+             "optional": {
+                "meta_batch": ("BatchManager",),
+            },
+            "hidden": {
+                "unique_id": "UNIQUE_ID"
+            },
         }
 
     CATEGORY = "tbox/Video"
@@ -218,7 +254,6 @@ class LoadVideoNode:
             raise Exception("video is not a valid path: " + kwargs['video'])
         
         kwargs['video'] = kwargs['video'].split('\n')[0]
-        
         if validate_path(kwargs['video']) != True:
             raise Exception("video is not a valid path: " + kwargs['video'])
         # if is_url(kwargs['video']):
