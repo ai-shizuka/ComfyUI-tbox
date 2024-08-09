@@ -179,6 +179,7 @@ class SaveVideoNode:
             "required": {
                 "path": ("STRING", {"multiline": True, "dynamicPrompts": False}),
                 "format": (ffmpeg_formats,),
+                "quality": ([100, 95, 90, 85, 80, 75, 70, 60, 50], {"default": 100}),
                 "pingpong": ("BOOLEAN", {"default": False}),
             },
             "optional": {
@@ -204,6 +205,7 @@ class SaveVideoNode:
         frame_rate=25,
         images=None,
         format="video/h264-mp4",
+        quality=85,
         pingpong=False,
         audio=None,
         prompt=None,
