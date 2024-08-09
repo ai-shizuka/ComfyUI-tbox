@@ -14,7 +14,7 @@ from .nodes.image.size_node import ConstrainImageNode
 from .nodes.video.load_node import LoadVideoNode
 from .nodes.video.save_node import SaveVideoNode
 from .nodes.video.info_node import VideoInfoNode
-
+from .nodes.video.batch_node import BatchManagerNode
 from .nodes.preprocessor.midas_node import MIDAS_Depth_Map_Preprocessor
 from .nodes.preprocessor.dwpose_node import DWPose_Preprocessor, AnimalPose_Preprocessor
 from .nodes.preprocessor.densepose_node import DensePose_Preprocessor
@@ -29,6 +29,7 @@ NODE_CLASS_MAPPINGS = {
     "VideoLoader": LoadVideoNode,
     "VideoSaver": SaveVideoNode,
     "VideoInfo": VideoInfoNode,
+    "BatchManager": BatchManagerNode,
     "ConstrainImageNode": ConstrainImageNode,
     "DensePosePreprocessor": DensePose_Preprocessor,
     "DWPosePreprocessor": DWPose_Preprocessor,
@@ -45,6 +46,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "VideoLoader": "Video Load",
     "VideoSaver": "Video Save",
     "VideoInfo": "Video Info", 
+    "BatchManager": "Batch Manager",
     "ConstrainImageNode": "Image Constrain",
     "DensePosePreprocessor": "DensePose Estimator",
     "DWPosePreprocessor": "DWPose Estimator",
