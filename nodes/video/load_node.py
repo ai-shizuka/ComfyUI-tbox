@@ -36,11 +36,11 @@ def target_size(width, height, force_size, custom_width, custom_height, downscal
     height = int(height/downscale_ratio + 0.5) * downscale_ratio
     return (width, height)
 
-def cv_frame_generator(video, force_rate, frame_load_cap, skip_first_frames,
+def cv_frame_generator(path, force_rate, frame_load_cap, skip_first_frames,
                        select_every_nth, meta_batch=None, unique_id=None):
-    video_cap = cv2.VideoCapture(strip_path(video))
+    video_cap = cv2.VideoCapture(strip_path(path))
     if not video_cap.isOpened():
-        raise ValueError(f"{video} could not be loaded with cv.")
+        raise ValueError(f"{path} could not be loaded with cv.")
 
     # extract video metadata
     fps = video_cap.get(cv2.CAP_PROP_FPS)
@@ -128,14 +128,14 @@ def batched(it, n):
     while batch := tuple(itertools.islice(it, n)):
         yield batch
         
-def load_video_cv(video: str, force_rate: int, force_size: str,
+def load_video_cv(path: str, force_rate: int, force_size: str,
                   custom_width: int,custom_height: int, frame_load_cap: int,
                   skip_first_frames: int, select_every_nth: int,
                   meta_batch=None, unique_id=None,
                   memory_limit_mb=None):
 
     if meta_batch is None or unique_id not in meta_batch.inputs:
-        gen = cv_frame_generator(video, force_rate, frame_load_cap, skip_first_frames,
+        gen = cv_frame_generator(path, force_rate, frame_load_cap, skip_first_frames,
                                  select_every_nth, meta_batch, unique_id)
         (width, height, fps, duration, total_frames, target_frame_time) = next(gen)
 
@@ -199,7 +199,7 @@ def load_video_cv(video: str, force_rate: int, force_size: str,
         raise RuntimeError("No frames generated")
 
     #Setup lambda for lazy audio capture
-    audio = lazy_get_audio(video, skip_first_frames * target_frame_time,
+    audio = lazy_get_audio(path, skip_first_frames * target_frame_time,
                                frame_load_cap*target_frame_time*select_every_nth)
     #Adjust target_frame_time for select_every_nth
     target_frame_time *= select_every_nth
@@ -225,7 +225,7 @@ class LoadVideoNode:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "video": ("STRING", {"default": "/Users/wadahana/Desktop/live-motion2.mp4", "multiline": True, "vhs_path_extensions": video_extensions}),
+                "path": ("STRING", {"default": "/Users/wadahana/Desktop/live-motion2.mp4", "multiline": True, "vhs_path_extensions": video_extensions}),
                 "force_rate": ("INT", {"default": 0, "min": 0, "max": 60, "step": 1}),
                 "force_size": (["Disabled", "Custom Height", "Custom Width", "Custom", "256x?", "?x256", "256x256", "512x?", "?x512", "512x512"],),
                 "custom_width": ("INT", {"default": 512, "min": 0, "max": DIMMAX, "step": 8}),
@@ -250,12 +250,12 @@ class LoadVideoNode:
     FUNCTION = "load_video"
 
     def load_video(self, **kwargs):
-        if kwargs['video'] is None :
-            raise Exception("video is not a valid path: " + kwargs['video'])
+        if kwargs['path'] is None :
+            raise Exception("video is not a valid path: " + kwargs['path'])
         
-        kwargs['video'] = kwargs['video'].split('\n')[0]
-        if validate_path(kwargs['video']) != True:
-            raise Exception("video is not a valid path: " + kwargs['video'])
+        kwargs['path'] = kwargs['path'].split('\n')[0]
+        if validate_path(kwargs['path']) != True:
+            raise Exception("video is not a valid path: " + kwargs['path'])
         # if is_url(kwargs['video']):
         #     kwargs['video'] = try_download_video(kwargs['video']) or kwargs['video']
         return load_video_cv(**kwargs)
