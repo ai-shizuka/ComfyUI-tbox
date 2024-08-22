@@ -346,8 +346,8 @@ class SaveVideoNode:
                 pass
             if meta_batch is not None:
                 meta_batch.outputs.pop(unique_id)
-                if len(meta_batch.outputs) == 0:
-                    meta_batch.reset()
+                #if len(meta_batch.outputs) == 0:
+                #    meta_batch.reset()
         else:
             return {}
 
