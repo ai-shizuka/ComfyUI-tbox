@@ -1,7 +1,10 @@
 
+import hashlib
+import os
 
 class BatchManagerNode:
     def __init__(self, frames_per_batch=-1):
+        print("BatchNode init")
         self.frames_per_batch = frames_per_batch
         self.inputs = {}
         self.outputs = {}
@@ -10,6 +13,7 @@ class BatchManagerNode:
         self.total_frames = float('inf')
     
     def reset(self):
+        print("BatchNode reset")
         self.close_inputs()
         for key in self.outputs:
             if getattr(self.outputs[key][-1], "gi_suspended", False):
@@ -57,3 +61,10 @@ class BatchManagerNode:
             print(f'Meta-Batch {requeue}/{num_batches}')
         #onExecuted seems to not be called unless some message is sent
         return (self,)
+    
+    @classmethod
+    def IS_CHANGED(self, frames_per_batch, prompt=None, unique_id=None):
+        print(f"BatchManagerNode >>>  IS_CHANGED : {result}")
+        random_bytes = os.urandom(32)
+        result = hashlib.sha256(random_bytes).hexdigest()
+        return result
