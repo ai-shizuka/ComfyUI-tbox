@@ -5,6 +5,7 @@ scikit-learn
 scikit-image
 insightface
 ultralytics
-onnxruntime-gpu
+onnxruntime-gpu==1.18.0 
+onnxruntime==1.18.0
 imageio_ffmpeg
 pykalman
