@@ -46,7 +46,6 @@ class BatchManagerNode:
     FUNCTION = "update_batch"
     
     def update_batch(self, frames_per_batch, prompt=None, unique_id=None):
-       
         if unique_id is not None and prompt is not None:
             requeue = prompt[unique_id]['inputs'].get('requeue', 0)
         else:

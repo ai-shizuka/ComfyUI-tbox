@@ -6,8 +6,6 @@ from PIL import Image, ImageSequence, ImageOps
 #from load_node import load_image, pil2tensor
 
 def save_image(img, filepath, format, quality):
-    print(f"save_image >> path: {filepath}")
-    print(f'save_image >> img: {img}')
     try:
         if format in ["jpg", "jpeg"]:
             img.convert("RGB").save(filepath, format="JPEG", quality=quality, subsampling=0)
