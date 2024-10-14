@@ -19,18 +19,23 @@ class WatermarkNode:
                 "images": ("IMAGE",),
                 "logo_list": ("IMAGE",),
             },
-            "optional": {"logo_mask": ("MASK",),}
+            "optional": {
+                "logo_mask": ("MASK",),
+                "enabled": ("BOOLEAN", {"default": True}),}
         }
     RETURN_TYPES = ("IMAGE",)
     FUNCTION = "watermark"
     CATEGORY = "tbox/Image"
     
-    def watermark(self, images, logo_list, logo_mask):
+    def watermark(self, images, logo_list, logo_mask, enabled):
         outputs = []
+        if enabled == False: 
+            return(images,)
         print(f'logo shape: {logo_list.shape}')
         print(f'images shape: {images.shape}')
         logo = tensor2pil(logo_list[0]) 
-        logo_mask = tensor2pil(logo_mask) 
+        if logo_mask is not None:
+            logo_mask = tensor2pil(logo_mask)
         for i, image in enumerate(images):
             img = Image.fromarray(np.clip(255. * image.cpu().numpy().squeeze(), 0, 255).astype(np.uint8))
             dst = self.add_watermark2(img, logo, logo_mask, 85)
