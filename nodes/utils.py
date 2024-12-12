@@ -6,6 +6,7 @@ import server
 import folder_paths
 import numpy as np
 from typing import Iterable
+from PIL import Image
 
 BIGMIN = -(2**53-1)
 BIGMAX = (2**53-1)
@@ -21,6 +22,11 @@ def tensor_to_shorts(tensor):
     return tensor_to_int(tensor, 16).astype(np.uint16)
 def tensor_to_bytes(tensor):
     return tensor_to_int(tensor, 8).astype(np.uint8)
+def tensor2pil(x):
+    return Image.fromarray(np.clip(255. * x.cpu().numpy().squeeze(), 0, 255).astype(np.uint8))
+def pil2tensor(image: Image.Image) -> torch.Tensor:
+    return torch.from_numpy(np.array(image).astype(np.float32) / 255.0).unsqueeze(0)
+
 
 def is_url(url):
     return url.split("://")[0] in ["http", "https"]

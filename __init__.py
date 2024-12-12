@@ -20,8 +20,10 @@ from .nodes.video.batch_node import BatchManagerNode
 from .nodes.preprocessor.midas_node import MIDAS_Depth_Map_Preprocessor
 from .nodes.preprocessor.dwpose_node import DWPose_Preprocessor, AnimalPose_Preprocessor
 from .nodes.preprocessor.densepose_node import DensePose_Preprocessor
+from .nodes.face.face_enhance_node import GFPGANNode
 
 NODE_CLASS_MAPPINGS = {
+    "GFPGANNode": GFPGANNode,
     "MaskAddNode": MaskAddNode,
     "ImageLoader": LoadImageNode,
     "ImageSaver": SaveImageNode,
@@ -41,6 +43,7 @@ NODE_CLASS_MAPPINGS = {
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
+    "GFPGANNode": "GFPGANNode",
     "MaskAddNode": "MaskAddNode",
     "ImageLoader": "Image Load",
     "ImageSaver": "Image Save",
