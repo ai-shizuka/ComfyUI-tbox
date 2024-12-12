@@ -5,7 +5,7 @@ import sys
 import argparse
 import cv2
 import numpy as np
-import timeit
+#import timeit
 import onnxruntime
 from facefusion.affine import create_box_mask, warp_face_by_landmark, paste_back
 
@@ -39,11 +39,11 @@ class GFPGANOnnx:
     def run(self, image):
         height, width = image.shape[0], image.shape[1]
         img = self.pre_process(image)
-        t = timeit.default_timer()
+        #t = timeit.default_timer()
         outputs = self.session.run(None, {self.input_name: img})
         output = outputs[0][0]
         output = self.post_process(output, height, width)
-        print('infer time:',timeit.default_timer()-t)  
+        #print('infer time:',timeit.default_timer()-t)  
         output = output.astype(np.uint8)
         return output
 
