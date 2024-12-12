@@ -2,13 +2,9 @@
 import torch
 import numpy as np
 from PIL import Image, ImageSequence, ImageOps
+from ..utils import tensor2pil, pil2tensor
 
 PADDING = 4
-
-def tensor2pil(x):
-    return Image.fromarray(np.clip(255. * x.cpu().numpy().squeeze(), 0, 255).astype(np.uint8))
-def pil2tensor(image: Image.Image) -> torch.Tensor:
-    return torch.from_numpy(np.array(image).astype(np.float32) / 255.0).unsqueeze(0)
 
 class WatermarkNode:
 
@@ -37,7 +33,7 @@ class WatermarkNode:
         if logo_mask is not None:
             logo_mask = tensor2pil(logo_mask)
         for i, image in enumerate(images):
-            img = Image.fromarray(np.clip(255. * image.cpu().numpy().squeeze(), 0, 255).astype(np.uint8))
+            img = tensor2pil(image) #Image.fromarray(np.clip(255. * image.cpu().numpy().squeeze(), 0, 255).astype(np.uint8))
             dst = self.add_watermark2(img, logo, logo_mask, 85)
             result = pil2tensor(dst)
             outputs.append(result)
