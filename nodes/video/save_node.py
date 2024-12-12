@@ -384,6 +384,8 @@ class SaveVideoNode:
             try:
                 res = subprocess.run(mux_args, input=audio_data,
                                         env=env, capture_output=True, check=True)
+                if res.returncode == 0:
+                    self.replace_file(output_file_with_audio_path, file_path)
             except subprocess.CalledProcessError as e:
                 raise Exception("An error occured in the ffmpeg subprocess:\n" \
                         + e.stderr.decode("utf-8"))
@@ -391,9 +393,23 @@ class SaveVideoNode:
                 print(res.stderr.decode("utf-8"), end="", file=sys.stderr)
 
 
-            
         return {}
     
     @classmethod
     def VALIDATE_INPUTS(self, format, **kwargs):
         return True
+
+    def replace_file(audio_path, file_path):
+        try:
+            # 删除 file_path 文件（如果存在）
+            if os.path.exists(file_path):
+                os.remove(file_path)
+                print(f"Deleted file: {file_path}")
+            else:
+                print(f"File not found, skipping deletion: {file_path}")
+            
+            # 将 output_file_with_audio_path 重命名为 file_path
+            os.rename(audio_path, file_path)
+            print(f"Renamed {audio_path} to {file_path}")
+        except Exception as e:
+            print(f"An error occurred: {e}")
