@@ -325,7 +325,6 @@ class SaveVideoNode:
             args = args[:13] + video_format['inputs_main_pass'] + args[13:]
 
         if output_process is None:
-           
             args += video_format['main_pass'] 
             output_process = ffmpeg_process(args, video_format, video_metadata, file_path, env)
             #Proceed to first yield
@@ -357,10 +356,11 @@ class SaveVideoNode:
                 #safely check if audio produced by VHS_LoadVideo actually exists
                 a_waveform = audio['waveform']
             except:
+                print(f'save audio >> not waveform')    
                 pass
         if a_waveform is not None:
             # Create audio file if input was provided
-            output_file_with_audio = f"{name}-audio.{extension}"
+            output_file_with_audio = f"{name}-audio{extension}"
             output_file_with_audio_path = os.path.join(output_dir, output_file_with_audio)
             if "audio_pass" not in video_format:
                 print("Selected video format does not have explicit audio support")
@@ -374,7 +374,7 @@ class SaveVideoNode:
             min_audio_dur = total_frames_output / frame_rate + 1
             mux_args = [ffmpeg_path, "-v", "error", "-i", file_path,
                         "-ar", str(audio['sample_rate']), "-ac", str(channels),
-                        "-f", "f32le", "-i", "-", "-c:v", "copy"] \
+                        "-y","-f", "f32le", "-i", "-", "-c:v", "copy"] \
                         + video_format["audio_pass"] \
                         + ["-af", "apad=whole_dur="+str(min_audio_dur),
                             "-shortest", output_file_with_audio_path]
@@ -390,8 +390,7 @@ class SaveVideoNode:
             if res.stderr:
                 print(res.stderr.decode("utf-8"), end="", file=sys.stderr)
 
-        #else:
-            # RENAME 
+
             
         return {}
     
