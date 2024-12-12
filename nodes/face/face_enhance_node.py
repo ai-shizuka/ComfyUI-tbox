@@ -42,7 +42,7 @@ class GFPGANNode:
 
     RETURN_TYPES = ("IMAGE", )
     FUNCTION = "process"
-    CATEGORY = "tbox/facefusion"
+    CATEGORY = "tbox/FaceFusion"
 
     def process(self, images, model_name, device='CPU', weight=0.8):
         providers = ['CPUExecutionProvider']
