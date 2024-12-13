@@ -399,7 +399,7 @@ class SaveVideoNode:
     def VALIDATE_INPUTS(self, format, **kwargs):
         return True
 
-    def replace_file(audio_path, file_path):
+    def replace_file(self, audio_path, file_path):
         try:
             # 删除 file_path 文件（如果存在）
             if os.path.exists(file_path):
