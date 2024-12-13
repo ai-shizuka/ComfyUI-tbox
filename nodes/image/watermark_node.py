@@ -47,8 +47,6 @@ class WatermarkNode:
             return image
         y = image_height - logo_height - PADDING * 1
         x = PADDING
-        print(f'logo size: {logo.size}')
-        print(f'image size: {image.size}')
         logo = logo.convert('RGBA')
         opacity = int(opacity / 100 * 255)
         logo.putalpha(Image.new("L", logo.size, opacity))
