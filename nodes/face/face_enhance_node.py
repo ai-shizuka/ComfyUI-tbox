@@ -9,23 +9,6 @@ from facefusion.affine import create_box_mask, warp_face_by_landmark, paste_back
 
 import folder_paths
 from ..utils import tensor2pil, pil2tensor
-    
-# class GFPGANProvider:
-#     @classmethod
-#     def INPUT_TYPES(s):
-#         return {
-#             "required": {
-#                 "model_name": ("IMAGE", ["gfpgan_1.4.onnx"]),
-#             },
-#         }
-    
-#     RETURN_TYPES = ("GFPGAN_MODEL",)
-#     RETURN_NAMES = ("model",)
-#     FUNCTION = "load_model"
-#     CATEGORY = "tbox/facefusion"
-
-#     def load_model(self, model_name):
-#         return (model_name,)
 
 
 class GFPGANNode:
