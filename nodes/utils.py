@@ -145,6 +145,8 @@ def requeue_workflow_unchecked():
 requeue_guard = [None, 0, 0, {}]
 def requeue_workflow(requeue_required=(-1,True)):
     assert(len(prompt_queue.currently_running) == 1)
+    if len(prompt_queue.currently_running) < 1:
+        return
     global requeue_guard
     (run_number, _, prompt, _, _) = next(iter(prompt_queue.currently_running.values()))
     print(f'requeue_workflow >> run_number:{run_number}\n')
