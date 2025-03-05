@@ -211,12 +211,3 @@ if __name__ == '__main__':
     cropper = HumanCropper(crop_cfg=cropConfig)
     test_video('/Users/wadahana/Desktop/dzq.mp4', cropper)
     
-    
-    # cropper = HumanCropper(crop_cfg=cropConfig)
-    # result = cropper.crop_source([image])
-    # #print(f'result: {result}')
-    # dst = result['frame_crop_lst'][0]
-    # lmk = result['lmk_crop_lst'][0]
-    # frame = draw_landmarks(frame=dst, landmarks=lmk)
-    # cv2.imwrite(f'/Users/wadahana/Desktop/output_0.jpg', dst)
-    # cv2.imwrite(f'/Users/wadahana/Desktop/output_s.jpg', frame)

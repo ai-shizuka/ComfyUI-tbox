@@ -9,14 +9,11 @@ torch.backends.cudnn.benchmark = True # disable CUDNN_BACKEND_EXECUTION_PLAN_DES
 
 import cv2; cv2.setNumThreads(0); cv2.ocl.setUseOpenCL(False)
 import numpy as np
-import os
-import os.path as osp
 from rich.progress import track
 
 #from .config.argument_config import ArgumentConfig
 from .config.inference_config import InferenceConfig
 from .config.crop_config import CropConfig
-from liveportrait.human_cropper import HumanCropper
 from liveportrait.utils.camera import get_rotation_matrix
 from liveportrait.utils.video import images2video ## concat_frames, get_fps, add_audio_to_video, has_audio_stream
 from liveportrait.utils.crop import prepare_paste_back, paste_back
@@ -28,7 +25,7 @@ from liveportrait.utils.filter import smooth
 from liveportrait.wrapper import HumanWrapper
 
 
-class HumanPipeLine(object):
+class HumanPipeline(object):
     def __init__(self, inference_cfg: InferenceConfig):
         self.live_portrait_wrapper: HumanWrapper = HumanWrapper(inference_cfg=inference_cfg)
     
@@ -187,7 +184,7 @@ class HumanPipeLine(object):
             c_s_eyes_lst, c_s_lip_lst = self.live_portrait_wrapper.calc_ratio(source_lmk_crop_lst)
             # save the motion template
             I_s_lst = self.live_portrait_wrapper.prepare_videos(img_crop_256x256_lst)
-            source_template_dct = self.make_motion_template(I_s_lst, c_s_eyes_lst, c_s_lip_lst, output_fps=source_fps)
+            source_template_dct = self.make_motion_template(I_s_lst, c_s_eyes_lst, c_s_lip_lst, output_fps=fps)
 
             key_r = 'R' if 'R' in driving_template_dct['motion'][0].keys() else 'R_d'  # compatible with previous keys
             if inf_cfg.flag_relative_motion:
@@ -433,23 +430,23 @@ class HumanPipeLine(object):
 
 
 if __name__ == '__main__':
-    image_input = "/Users/wadahana/Desktop/sis/ami.jpeg"
-    #image_input = "/Users/wadahana/Desktop/face2.jpeg"
-    video_input = '/Users/wadahana/Desktop/dzq.mp4'
-    video_output =  '/Users/wadahana/Desktop/output.mp4'
+    from liveportrait.human_cropper import HumanCropper
+    
+    image_input = "../assets/newbee.jpeg"
+    #image_input = "./assets/liuyifei.jpeg"
+    video_input = '../assets/dzq.mp4'
+    video_output =  '../output.mp4'
     cap = cv2.VideoCapture(video_input)
-    fourcc = cv2.VideoWriter_fourcc(*'XVID')  # 或根据你的需要选择不同的编码器
+
     fps = cap.get(cv2.CAP_PROP_FPS)  # 获取视频帧率
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))  # 获取视频宽度
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))  # 获取视频高度
     
-    #video_output = '/Users/wadahana/Desktop/output.avi'  # 输出视频路径
-    #out = cv2.VideoWriter(video_output, fourcc, fps, (width, height))
     
     cropConfig = CropConfig()
     inferConfig = InferenceConfig()
     cropper = HumanCropper(crop_cfg=cropConfig)
-    pipeline = HumanPipeLine(inference_cfg=inferConfig)
+    pipeline = HumanPipeline(inference_cfg=inferConfig)
     
     frames = []
     for i in range(0, 50):
