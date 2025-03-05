@@ -30,7 +30,7 @@ class PurgeVRAMNode:
 
     RETURN_TYPES = ()
     FUNCTION = "purge_vram"
-    CATEGORY = "tbox/other"
+    CATEGORY = "tbox/Other"
     OUTPUT_NODE = True
 
     def purge_vram(self, anything, purge_cache, purge_models):
