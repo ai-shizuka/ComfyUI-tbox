@@ -20,8 +20,8 @@ from liveportrait.utils.crop import (
 class HumanCropper(object):
     def __init__(self,  **kwargs) -> None:
         self.device_id = kwargs.get("device_id", 0)
-        self.provider = ["CPUExecutionProvider"]
-        self.device = "mps"
+        self.provider = ["CUDAExecutionProvider"]
+        self.device = "cuda"
     #   provider = ["CUDAExecutionProvider"]   
         self.crop_cfg: CropConfig = kwargs.get("crop_cfg", None)
         self.face_analysis_wrapper = FaceAnalysisDIY(

@@ -7,14 +7,14 @@ parameters used for crop faces
 import os
 from dataclasses import dataclass
 from typing import Tuple
-from liveportrait.config.base_config import PrintableConfig, models_path
+from liveportrait.config.base_config import PrintableConfig, liveportrait_path, models_path
 
 @dataclass(repr=False)  # use repr from PrintableConfig
 class CropConfig(PrintableConfig):
     insightface_root: str = os.path.abspath(os.path.join(models_path, 'insightface'))
     landmark_ckpt_path: str = os.path.abspath(os.path.join(models_path, 'liveportrait/landmark.onnx'))
-    # xpose_config_file_path: str = make_abs_path("../utils/dependencies/XPose/config_model/UniPose_SwinT.py")
-    # xpose_embedding_cache_path: str = make_abs_path('../utils/resources/clip_embedding')
+    xpose_config_file_path: str = os.path.abspath(os.path.join(liveportrait_path, "modules/XPose/config_model/UniPose_SwinT.py"))
+    xpose_embedding_cache_path: str = os.path.abspath(os.path.join(liveportrait_path, 'resources/clip_embedding'))
     xpose_ckpt_path: str = os.path.abspath(os.path.join(models_path, 'liveportrait/animal/xpose.pth'))
 
     device_id: int = 0  # gpu device id

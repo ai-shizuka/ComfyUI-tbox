@@ -3,8 +3,12 @@
 import os.path as osp
 import cv2; cv2.setNumThreads(0); cv2.ocl.setUseOpenCL(False)
 import torch
+import pickle
 import numpy as np
 import onnxruntime
+from PIL import Image
+from torchvision.ops import nms
+
 from liveportrait.utils.timer import Timer
 from liveportrait.utils.crop import crop_image, _transform_pts
 from liveportrait.modules.XPose import transforms as T
@@ -109,6 +113,7 @@ class XPoseRunner(object):
         self.model = self.load_animal_model(model_config_path, model_checkpoint_path, self.device)
         self.timer = Timer()
         # Load cached embeddings if available
+        print(f'embeddings_cache_path: {embeddings_cache_path}')
         try:
             with open(f'{embeddings_cache_path}_9.pkl', 'rb') as f:
                 self.ins_text_embeddings_9, self.kpt_text_embeddings_9 = pickle.load(f)

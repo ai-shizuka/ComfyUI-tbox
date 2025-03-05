@@ -20,13 +20,13 @@ from liveportrait.utils.crop import (
 
 class AnimalCropper(HumanCropper):
     def __init__(self,  **kwargs) -> None:
-        super.__init__(kwargs)
+        super().__init__(**kwargs)
         self.animal_landmark_runner = AnimalLandmarkRunner(
-                model_config_path=self.crop_cfg.xpose_config_file_path,
-                model_checkpoint_path=self.crop_cfg.xpose_ckpt_path,
-                embeddings_cache_path=self.crop_cfg.xpose_embedding_cache_path,
-                flag_use_half_precision=kwargs.get("flag_use_half_precision", True),
-            )
+            model_config_path=self.crop_cfg.xpose_config_file_path,
+            model_checkpoint_path=self.crop_cfg.xpose_ckpt_path,
+            embeddings_cache_path=self.crop_cfg.xpose_embedding_cache_path,
+            flag_use_half_precision=kwargs.get("flag_use_half_precision", True),
+        )
         self.animal_landmark_runner.warmup()
     
     def crop_source(self, source_rgb_lst):
@@ -84,16 +84,17 @@ class AnimalCropper(HumanCropper):
 
 if __name__ == '__main__':
     from liveportrait.utils.landmark_runner import draw_landmarks
+    
     def test_image(input_file, cropper) :
-        image = cv2.imread(input)
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        image = cv2.imread(input_file)
+        #image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         result = cropper.crop_source([image])
         dst = result['frame_crop_lst'][0]
         lmk = result['lmk_crop_lst'][0]
         frame = draw_landmarks(frame=dst, landmarks=lmk)
-        cv2.imwrite(f'/Users/wadahana/Desktop/output_crop.jpg', frame)
+        cv2.imwrite(f'./output_crop2.jpg', frame)
     
 
     cropConfig = CropConfig()
     cropper = AnimalCropper(crop_cfg=cropConfig)
-    test_image('/Users/wadahana/Desktop/corgi.jpg', cropper)
+    test_image('../assets/cat1.jpg', cropper)
