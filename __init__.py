@@ -25,8 +25,12 @@ from .nodes.preprocessor.dwpose_node import DWPose_Preprocessor, AnimalPose_Prep
 from .nodes.preprocessor.densepose_node import DensePose_Preprocessor
 from .nodes.face.face_enhance_node import GFPGANNode
 from .nodes.other.vram_node import PurgeVRAMNode
+from .nodes.prompt.llama_node import LLamaModelNode, LLamaOptionsNode, LLamaCLIPTextEncodeNode
 
 NODE_CLASS_MAPPINGS = {
+    "LLamaModelNode": LLamaModelNode,
+    "LLamaOptionsNode": LLamaOptionsNode,
+    "LLamaCLIPTextEncodeNode": LLamaCLIPTextEncodeNode,
     "PurgeVRAMNode": PurgeVRAMNode,
     "GFPGANNode": GFPGANNode,
     "MaskAddNode": MaskAddNode,
@@ -51,6 +55,9 @@ NODE_CLASS_MAPPINGS = {
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
+    "LLamaModelNode": "LLama Model Loader",
+    "LLamaOptionsNode": "LLama Options",
+    "LLamaCLIPTextEncodeNode": "LLama CLIPTextEncode",
     "PurgeVRAMNode":"PurgeVRAMNode",
     "GFPGANNode": "GFPGANNode",
     "MaskAddNode": "MaskAddNode",
