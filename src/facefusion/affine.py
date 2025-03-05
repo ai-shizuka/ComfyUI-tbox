@@ -39,3 +39,8 @@ def paste_back(image, cropped, crop_mask, affine_matrix):
     paste_vision_frame[:, :, 1] = inverse_mask * inverse_vision_frame[:, :, 1] + (1 - inverse_mask) * image[:, :, 1]
     paste_vision_frame[:, :, 2] = inverse_mask * inverse_vision_frame[:, :, 2] + (1 - inverse_mask) * image[:, :, 2]
     return paste_vision_frame
+
+def blend_frame(temp_vision_frame , paste_vision_frame, blend ):
+	face_enhancer_blend = 1 - (blend)
+	temp_vision_frame = cv2.addWeighted(temp_vision_frame, face_enhancer_blend, paste_vision_frame, 1 - face_enhancer_blend, 0)
+	return temp_vision_frame

@@ -4,6 +4,7 @@ import onnxruntime
 import cv2
 import numpy as np
 from collections import namedtuple
+from facefusion.affine import create_box_mask, warp_face_by_landmark, paste_back
 
 Face = namedtuple('Face',
 [
@@ -118,21 +119,54 @@ class YoloFaceOnnx:
     
 
 if __name__ == "__main__":
+    def test_image(detector):
+        image = cv2.imread('/Users/wadahana/Desktop/test4.jpg')
+        face_list = detector.detect(image=image, conf=0.7)
+        face = face_list[0]
+        #print(f'face: {face}')
+        #res = [512, 512]
+        # box_mask = create_box_mask(res, 0.3, (0,0,0,0))
+        # crop_mask = np.minimum.reduce([box_mask]).clip(0, 1)
+        # pt1 = (int(face.bounding_box[0]), int(face.bounding_box[1]))  # 左上角 (x1, y1)
+        # pt2 = (int(face.bounding_box[2]), int(face.bounding_box[3]))  # 右下角 (x2, y2)
+        # cv2.rectangle(image, pt1, pt2, (255, 0, 0), 1)
+
+        x1, y1, x2, y2 = map(int, face.bounding_box)
+        face_crop = image[y1:y2, x1:x2]
+        resized_face = cv2.resize(face_crop, (512, 512))
+        
+        print(f'face_list: {face_list}')
+        cv2.imwrite('/Users/wadahana/Desktop/output.jpg', face_crop)
+        #cv2.imwrite('/Users/wadahana/Desktop/output_mask_png', crop_mask)
+    def test_video(detector):
+        video_input = '/Users/wadahana/Desktop/dzq.mp4'
+        cap = cv2.VideoCapture(video_input)
+        fourcc = cv2.VideoWriter_fourcc(*'XVID')  # 或根据你的需要选择不同的编码器
+        fps = cap.get(cv2.CAP_PROP_FPS)  # 获取视频帧率
+        width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))  # 获取视频宽度
+        height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))  # 获取视频高度
+        
+        video_output = '/Users/wadahana/Desktop/output.avi'  # 输出视频路径
+        out = cv2.VideoWriter(video_output, fourcc, fps, (512, 512))
+        
+        while True:
+            ret, frame = cap.read()
+            if not ret:
+                break
+            face_list = detector.detect(image=frame, conf=0.7)
+            face = face_list[0]
+            x1, y1, x2, y2 = map(int, face.bounding_box)
+            face_crop = frame[y1:y2, x1:x2]
+            resized_face = cv2.resize(face_crop, (512, 512))
+            out.write(resized_face)
+    
+        cap.release()
+        out.release()
+
+
     model_path = '/Users/wadahana/workspace/AI/sd/ComfyUI/models/facefusion/yoloface_8n.onnx'
-    providers=['CPUExecutionProvider']
+    providers=['CPUExecutionProvider', 'CoreMLExecutionProvider']
    
     detector = YoloFaceOnnx(model_path=model_path, providers=providers)
-
-    image = cv2.imread('/Users/wadahana/Desktop/test4.jpg')
-
-    face_list = detector.detect(image=image, conf=0.7)
-    face = face_list[0]
-    
-    pt1 = (int(face.bounding_box[0]), int(face.bounding_box[1]))  # 左上角 (x1, y1)
-    pt2 = (int(face.bounding_box[2]), int(face.bounding_box[3]))  # 右下角 (x2, y2)
-    cv2.rectangle(image, pt1, pt2, (255, 0, 0), 1)
-
-    print(f'face_list: {face_list}')
-    cv2.imwrite('/Users/wadahana/Desktop/output.jpg', image)
-
+    test_image(detector)
     

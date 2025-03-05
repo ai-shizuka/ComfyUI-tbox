@@ -5,9 +5,9 @@ import sys
 import argparse
 import cv2
 import numpy as np
-#import timeit
 import onnxruntime
 from facefusion.affine import create_box_mask, warp_face_by_landmark, paste_back
+#from affine import create_box_mask, warp_face_by_landmark, paste_back, blend_frame
 
 class GFPGANOnnx:
     def __init__(self, model_path, providers):
@@ -58,7 +58,7 @@ if __name__ == "__main__":
 
    
 
-    image = cv2.imread('/Users/wadahana/Desktop/anime-3.jpeg')
+    image = cv2.imread('/Users/wadahana/Desktop/oo1.png')
 
     face_list = detector.detect(image=image, conf=0.7)
     print(f'total of face: {len(face_list)}')
@@ -70,7 +70,8 @@ if __name__ == "__main__":
         crop_mask = np.minimum.reduce([box_mask]).clip(0, 1)
         result = session.run(cropped)
         cv2.imwrite(f'/Users/wadahana/Desktop/output_{index}.jpg', result)
-        output = paste_back(output, result, crop_mask, affine_matrix)
+        pasted = paste_back(output, result, crop_mask, affine_matrix)
+        output = blend_frame(output, pasted, 0.8)
         
     cv2.imwrite(f'/Users/wadahana/Desktop/output.jpg', output)
  
