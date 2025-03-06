@@ -447,7 +447,7 @@ if __name__ == '__main__':
     
     cropConfig = CropConfig()
     inferConfig = InferenceConfig()
-    cropper = HumanCropper(crop_cfg=cropConfig)
+    cropper = HumanCropper(crop_cfg=cropConfig, providers=["CUDAExecutionProvider"])
     pipeline = HumanPipeline(inference_cfg=inferConfig)
     
     frames = []

@@ -20,21 +20,20 @@ from liveportrait.utils.crop import (
 class HumanCropper(object):
     def __init__(self,  **kwargs) -> None:
         self.device_id = kwargs.get("device_id", 0)
-        self.provider = ["CUDAExecutionProvider"]
-        self.device = "cuda"
-    #   provider = ["CUDAExecutionProvider"]   
+        self.providers = kwargs.get("providers", ["CPUExecutionProvider"])
+
         self.crop_cfg: CropConfig = kwargs.get("crop_cfg", None)
         self.face_analysis_wrapper = FaceAnalysisDIY(
                     name="buffalo_l",
                     root=self.crop_cfg.insightface_root,
-                    providers=self.provider,
+                    providers=self.providers,
                 )
         self.face_analysis_wrapper.prepare(ctx_id=self.device_id, det_size=(512, 512), det_thresh=self.crop_cfg.det_thresh)
         self.face_analysis_wrapper.warmup()
         
         self.human_landmark_runner = HumanLandmarkRunner(
             ckpt_path=self.crop_cfg.landmark_ckpt_path,
-            onnx_provider=self.device,
+            onnx_provider=self.providers,#self.device,
             device_id=self.device_id,
         )
         self.human_landmark_runner.warmup()
@@ -215,6 +214,6 @@ if __name__ == '__main__':
         images2video(images=frames, wfp='../output_crop.mp4', fps=fps)
    
     cropConfig = CropConfig()
-    cropper = HumanCropper(crop_cfg=cropConfig)
+    cropper = HumanCropper(crop_cfg=cropConfig, providers=["CUDAExecutionProvider"])
     test_video('../assets/dzq.mp4', cropper)
     

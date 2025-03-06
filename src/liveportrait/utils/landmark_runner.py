@@ -41,25 +41,9 @@ class HumanLandmarkRunner(object):
         self.dsize = kwargs.get('dsize', 224)
         self.timer = Timer()
 
-        if onnx_provider.lower() == 'cuda':
-            self.session = onnxruntime.InferenceSession(
-                ckpt_path, providers=[
-                    ('CUDAExecutionProvider', {'device_id': device_id})
-                ]
-            )
-        elif onnx_provider.lower() == 'mps':
-            self.session = onnxruntime.InferenceSession(
-                ckpt_path, providers=[
-                    'CoreMLExecutionProvider'
-                ]
-            )
-        else:
-            opts = onnxruntime.SessionOptions()
-            opts.intra_op_num_threads = 4  # 默认线程数为 4
-            self.session = onnxruntime.InferenceSession(
-                ckpt_path, providers=['CPUExecutionProvider'],
-                sess_options=opts
-            )
+        self.session = onnxruntime.InferenceSession(
+            ckpt_path, providers=onnx_provider
+        )
 
     def _run(self, inp):
         out = self.session.run(None, {'input': inp})
