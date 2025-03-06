@@ -107,7 +107,7 @@ class HumanCropper(object):
                     print(f"No face detected in the frame #{idx}")
                     continue
                 elif len(src_face) > 1:
-                    print(f"More than one face detected in the driving frame_{idx}, only pick one face by rule {direction}.")
+                    print(f"More than one face detected in the driving frame_{idx}, only pick one face by rule {self.crop_cfg.direction}.")
                 src_face = src_face[0]
                 lmk = src_face.landmark_2d_106
                 lmk = self.human_landmark_runner.run(frame_rgb, lmk)
@@ -172,7 +172,9 @@ class HumanCropper(object):
 
 
 if __name__ == '__main__':
+    from rich.progress import track
     from liveportrait.utils.landmark_runner import draw_landmarks
+    
     def test_image(input_file, cropper) :
         image = cv2.imread(input)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
@@ -190,24 +192,29 @@ if __name__ == '__main__':
         fps = cap.get(cv2.CAP_PROP_FPS)  # 获取视频帧率
         width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))  # 获取视频宽度
         height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))  # 获取视频高度
+        total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         frames = []
-        for i in range(0, 30):
+        
+        for i in track(range(total), description='Read Video Frame....', transient=True):
             ret, frame = cap.read()
             if not ret:
                 break
             frames.append(frame)
+            
         cap.release()
+        
         results = cropper.crop_driving(frames)
         frames = []
-        for i in range(0, 30):
+        
+        for i in track(range(total), description='Draw Landmarks....', transient=True):
             dst = results['frame_crop_lst'][i]
             lmk = results['lmk_crop_lst'][i]
             frame = draw_landmarks(frame=dst, landmarks=lmk)
             frames.append(frame)
 
-        images2video(images=frames, wfp='/Users/wadahana/Desktop/output_crop.mp4', fps=fps)
+        images2video(images=frames, wfp='../output_crop.mp4', fps=fps)
    
     cropConfig = CropConfig()
     cropper = HumanCropper(crop_cfg=cropConfig)
-    test_video('/Users/wadahana/Desktop/dzq.mp4', cropper)
+    test_video('../assets/dzq.mp4', cropper)
     

@@ -431,16 +431,18 @@ class HumanPipeline(object):
 
 if __name__ == '__main__':
     from liveportrait.human_cropper import HumanCropper
-    
-    image_input = "../assets/newbee.jpeg"
-    #image_input = "./assets/liuyifei.jpeg"
+    from liveportrait.utils.landmark_runner import draw_landmarks
+    from rich.progress import track
+    image_input = "../assets/ami.jpg"
+    #image_input = "../assets/liuyifei.jpg"
     video_input = '../assets/dzq.mp4'
-    video_output =  '../output.mp4'
+    video_output =  '../output_live.mp4'
     cap = cv2.VideoCapture(video_input)
 
     fps = cap.get(cv2.CAP_PROP_FPS)  # 获取视频帧率
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))  # 获取视频宽度
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))  # 获取视频高度
+    total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     
     
     cropConfig = CropConfig()
@@ -449,7 +451,7 @@ if __name__ == '__main__':
     pipeline = HumanPipeline(inference_cfg=inferConfig)
     
     frames = []
-    for i in range(0, 50):
+    for i in track(range(total), description='Read Video Frame....', transient=True):
         ret, frame = cap.read()
         if not ret:
             break
@@ -464,10 +466,16 @@ if __name__ == '__main__':
     result = pipeline.execute(source_rgb_lst=[image], source_crop_info=source_crop_info, driving_rgb_lst=frames, driving_crop_info=driving_crop_info, fps=fps)
     print(f'shape of result: {len(result)}')
 
+    frames = []
     images2video(images=result, wfp=video_output, fps=fps)
-    for frame in result: 
-        print(f'shape of frame: {frame.shape}')
-    #    out.write(frame)
+    for i in track(range(total), description='Draw Landmarks....', transient=True):
+        dst = driving_crop_info['frame_crop_lst'][i]
+        lmk = driving_crop_info['lmk_crop_lst'][i]
+        frame = draw_landmarks(frame=dst, landmarks=lmk)
+        frames.append(frame)
+
+    images2video(images=frames, wfp='../output_crop.mp4', fps=fps)
+
+
     
-    # out.release()
-    
+    #ffmpeg -i ../assets/dzq1.mp4 -i ../output_live.mp4 -c:v copy -c:a copy  ../output_audio.mp4
