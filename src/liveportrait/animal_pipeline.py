@@ -22,7 +22,7 @@ from rich.progress import track
 from liveportrait.config.inference_config import InferenceConfig
 from liveportrait.config.crop_config import CropConfig
 from liveportrait.utils.camera import get_rotation_matrix
-from liveportrait.utils.video import images2video, concat_frames, get_fps, add_audio_to_video, has_audio_stream, video2gif
+from liveportrait.utils.video import images2video#, concat_frames, get_fps, add_audio_to_video, has_audio_stream, video2gif
 from liveportrait.utils.crop import _transform_img, prepare_paste_back, paste_back
 from liveportrait.utils.io import load_image_rgb, load_video, resize_to_limit, dump, load
 from liveportrait.utils.helper import mkdir, basename, dct2device, is_video, is_template, remove_suffix, is_image, calc_motion_multiplier
@@ -33,7 +33,7 @@ from liveportrait.wrapper import AnimalWrapper
 
 class AnimalPipeline(object):
 
-    def __init__(self, inference_cfg: InferenceConfig, crop_cfg: CropConfig):
+    def __init__(self, inference_cfg: InferenceConfig):
         self.live_portrait_wrapper_animal: AnimalWrapper = AnimalWrapper(inference_cfg=inference_cfg)
     
     def make_motion_template(self, I_lst, **kwargs):
@@ -66,7 +66,7 @@ class AnimalPipeline(object):
         driving_rgb_crop_256x256_lst = [cv2.resize(_, (256, 256)) for _ in driving_rgb_crop_lst]
         #######################################
     
-        I_d_lst = self.live_portrait_wrapper.live_portrait_wrapper_animal(driving_rgb_crop_256x256_lst)
+        I_d_lst = self.live_portrait_wrapper_animal.prepare_videos(driving_rgb_crop_256x256_lst)
         driving_template_dct = self.make_motion_template(I_d_lst, output_fps=fps)
         
         dump(wfp_template, driving_template_dct)
@@ -114,7 +114,7 @@ class AnimalPipeline(object):
             driving_rgb_crop_256x256_lst = [cv2.resize(_, (256, 256)) for _ in driving_rgb_crop_lst]
             #######################################
         
-            I_d_lst = self.live_portrait_wrapper.live_portrait_wrapper_animal(driving_rgb_crop_256x256_lst)
+            I_d_lst = self.live_portrait_wrapper_animal.prepare_videos(driving_rgb_crop_256x256_lst)
             driving_template_dct = self.make_motion_template(I_d_lst, output_fps=fps)
         
         return self.do_execute(source_rgb_lst, source_crop_info, n_frames, driving_template_dct)
@@ -180,11 +180,13 @@ class AnimalPipeline(object):
             if inf_cfg.flag_pasteback and inf_cfg.flag_do_crop and inf_cfg.flag_stitching:
                 I_p_pstbk = paste_back(I_p_i, source_crop_info['M_c2o_lst'][0], img_rgb, mask_ori_float)
                 I_p_pstbk_lst.append(I_p_pstbk)
+            
+        return I_p_pstbk_lst
         
 
 if __name__ == '__main__':
     from liveportrait.animal_cropper import AnimalCropper
-    image_input = "../assets/cat1.jpeg"
+    image_input = "../assets/shiba.jpg"
     #image_input = "./assets/liuyifei.jpeg"
     video_input = '../assets/dzq.mp4'
     video_output =  '../output.mp4'
@@ -199,7 +201,7 @@ if __name__ == '__main__':
     pipeline = AnimalPipeline(inference_cfg=inferConfig)
     
     frames = []
-    for i in range(0, 50):
+    for i in range(0, 100):
         ret, frame = cap.read()
         if not ret:
             break
@@ -215,5 +217,3 @@ if __name__ == '__main__':
     print(f'shape of result: {len(result)}')
 
     images2video(images=result, wfp=video_output, fps=fps)
-    for frame in result: 
-        print(f'shape of frame: {frame.shape}')
