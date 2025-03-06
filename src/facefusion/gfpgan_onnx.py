@@ -6,7 +6,6 @@ import argparse
 import cv2
 import numpy as np
 import onnxruntime
-from facefusion.affine import create_box_mask, warp_face_by_landmark, paste_back
 #from affine import create_box_mask, warp_face_by_landmark, paste_back, blend_frame
 
 class GFPGANOnnx:
@@ -49,6 +48,8 @@ class GFPGANOnnx:
 
 if __name__ == "__main__":
     from yoloface_onnx import YoloFaceOnnx
+    from facefusion.affine import create_box_mask, warp_face_by_landmark, paste_back, blend_frame
+    
     providers=['CPUExecutionProvider']
     model_path = '/Users/wadahana/workspace/AI/sd/ComfyUI/models/facefusion/gfpgan_1.4.onnx'
     yolo_path = '/Users/wadahana/workspace/AI/sd/ComfyUI/models/facefusion/yoloface_8n.onnx'

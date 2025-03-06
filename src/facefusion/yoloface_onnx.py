@@ -4,7 +4,6 @@ import onnxruntime
 import cv2
 import numpy as np
 from collections import namedtuple
-from facefusion.affine import create_box_mask, warp_face_by_landmark, paste_back
 
 Face = namedtuple('Face',
 [
@@ -119,6 +118,9 @@ class YoloFaceOnnx:
     
 
 if __name__ == "__main__":
+    from liveportrait.utils.landmark_runner import draw_landmarks
+    from liveportrait.utils.video import images2video
+    from rich.progress import track
     def test_image(detector):
         image = cv2.imread('/Users/wadahana/Desktop/test4.jpg')
         face_list = detector.detect(image=image, conf=0.7)
@@ -138,35 +140,71 @@ if __name__ == "__main__":
         print(f'face_list: {face_list}')
         cv2.imwrite('/Users/wadahana/Desktop/output.jpg', face_crop)
         #cv2.imwrite('/Users/wadahana/Desktop/output_mask_png', crop_mask)
+        
+    def adjust_bounding_box(bbox, width, height, dsize=512):
+        x1, y1, x2, y2 = map(int, bbox)
+
+        # 计算中心点
+        cx = (x1 + x2) // 2
+        cy = (y1 + y2) // 2
+
+        # 计算新的边界框
+        new_x1 = max(0, cx - dsize // 2)
+        new_y1 = max(0, cy - dsize // 2)
+        new_x2 = min(width, cx + dsize // 2)
+        new_y2 = min(height, cy + dsize // 2)
+
+        # 如果因超出边界导致尺寸不足512x512，进行调整
+        if new_x2 - new_x1 < dsize:
+            if new_x1 == 0:
+                new_x2 = min(width, new_x1 + dsize)
+            else:
+                new_x1 = max(0, new_x2 - dsize)
+
+        if new_y2 - new_y1 < dsize:
+            if new_y1 == 0:
+                new_y2 = min(height, new_y1 + dsize)
+            else:
+                new_y1 = max(0, new_y2 - dsize)
+
+        return (new_x1, new_y1, new_x2, new_y2)
+
     def test_video(detector):
-        video_input = '/Users/wadahana/Desktop/dzq.mp4'
+        from facefusion.affine import create_box_mask, warp_face_by_landmark, paste_back
+        video_input = '../assets/dzq.mp4'
         cap = cv2.VideoCapture(video_input)
-        fourcc = cv2.VideoWriter_fourcc(*'XVID')  # 或根据你的需要选择不同的编码器
         fps = cap.get(cv2.CAP_PROP_FPS)  # 获取视频帧率
+        total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))  # 获取视频宽度
         height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))  # 获取视频高度
         
-        video_output = '/Users/wadahana/Desktop/output.avi'  # 输出视频路径
-        out = cv2.VideoWriter(video_output, fourcc, fps, (512, 512))
-        
-        while True:
+        frames = []
+        #while True:
+        for i in track(range(total), description='Detecting....', transient=True):
             ret, frame = cap.read()
             if not ret:
                 break
+            frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
             face_list = detector.detect(image=frame, conf=0.7)
             face = face_list[0]
+            frame = draw_landmarks(frame, face.landmarks)
             x1, y1, x2, y2 = map(int, face.bounding_box)
+            #(x1, y1, x2, y2) = adjust_bounding_box(bbox=face.bounding_box, width=width, height=height, dsize=512)
             face_crop = frame[y1:y2, x1:x2]
             resized_face = cv2.resize(face_crop, (512, 512))
-            out.write(resized_face)
+            #frames.append(resized_face)
+            #out.write(resized_face)
+            
+            frames.append(resized_face)
     
+        images2video(frames, wfp='../output_yoloface.mp4', fps=fps)
         cap.release()
-        out.release()
 
 
-    model_path = '/Users/wadahana/workspace/AI/sd/ComfyUI/models/facefusion/yoloface_8n.onnx'
-    providers=['CPUExecutionProvider', 'CoreMLExecutionProvider']
+
+    model_path = '../../../models/facefusion/yoloface_8n.onnx'
+    providers=['CPUExecutionProvider', 'CoreMLExecutionProvider', 'CUDAExecutionProvider']
    
     detector = YoloFaceOnnx(model_path=model_path, providers=providers)
-    test_image(detector)
-    
+    test_video(detector)
+    print('test yoloface_onnx finished! ')
