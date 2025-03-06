@@ -31,13 +31,13 @@ class InferenceConfig(PrintableConfig):
     checkpoint_S: str = os.path.abspath(os.path.join(models_path,'liveportrait/stitching_retargeting_module.safetensors'))  # path to checkpoint to S and R_eyes, R_lip
 
     # ANIMAL MODEL CONFIG, NOT EXPORTED PARAMS
-    # version_animals = "" # old version
-    version_animals = "_v1.1" # new (v1.1) version
-    checkpoint_F_animal: str = os.path.abspath(os.path.join(models_path,'liveportrait_animals/base_models{version_animals}/appearance_feature_extractor.safetensors'))  # path to checkpoint of F
-    checkpoint_M_animal: str = os.path.abspath(os.path.join(models_path,'liveportrait_animals/base_models{version_animals}/motion_extractor.safetensors'))  # path to checkpoint pf M
-    checkpoint_G_animal: str = os.path.abspath(os.path.join(models_path,'liveportrait_animals/base_models{version_animals}/spade_generator.safetensors'))  # path to checkpoint of G
-    checkpoint_W_animal: str = os.path.abspath(os.path.join(models_path,'liveportrait_animals/base_models{version_animals}/warping_module.safetensors'))  # path to checkpoint of W
-    checkpoint_S_animal: str = os.path.abspath(os.path.join(models_path,'liveportrait/retargeting_models/stitching_retargeting_module.safetensors'))  # path to checkpoint to S and R_eyes, R_lip, NOTE: use human temporarily!
+    version_animals = "" # old version
+    #version_animals = "_v1.1" # new (v1.1) version
+    checkpoint_F_animal: str = os.path.abspath(os.path.join(models_path,f'liveportrait/animal/appearance_feature_extractor.safetensors'))  # path to checkpoint of F
+    checkpoint_M_animal: str = os.path.abspath(os.path.join(models_path,f'liveportrait/animal/motion_extractor.safetensors'))  # path to checkpoint pf M
+    checkpoint_G_animal: str = os.path.abspath(os.path.join(models_path,f'liveportrait/animal/spade_generator.safetensors'))  # path to checkpoint of G
+    checkpoint_W_animal: str = os.path.abspath(os.path.join(models_path,f'liveportrait/animal/warping_module.safetensors'))  # path to checkpoint of W
+    checkpoint_S_animal: str = os.path.abspath(os.path.join(models_path,f'liveportrait/animal/stitching_retargeting_module.safetensors'))  # path to checkpoint to S and R_eyes, R_lip, NOTE: use human temporarily!
 
 
     # EXPORTED PARAMS
