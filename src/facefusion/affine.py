@@ -8,10 +8,23 @@ ffhq_512 = np.array([
     [ 0.39308822, 0.72541100 ],
     [ 0.61150205, 0.72490465 ]
 ])
+arcface_112_v2 = np.array([
+    [ 0.34191607, 0.46157411 ],
+    [ 0.65653393, 0.45983393 ],
+    [ 0.50022500, 0.64050536 ],
+    [ 0.37097589, 0.82469196 ],
+    [ 0.63151696, 0.82325089 ]
+])
+arcface_128_v2 = np.array([
+    [ 0.36167656, 0.40387734 ],
+    [ 0.63696719, 0.40235469 ],
+    [ 0.50019687, 0.56044219 ],
+    [ 0.38710391, 0.72160547 ],
+    [ 0.61507734, 0.72034453 ]
+])
 
-
-def warp_face_by_landmark(image , face_landmark_5, crop_size ):
-	normed_warp_template = ffhq_512 * crop_size
+def warp_face_by_landmark(image , face_landmark_5, warp_template, crop_size):
+	normed_warp_template = warp_template * crop_size
 	affine_matrix = cv2.estimateAffinePartial2D(face_landmark_5, normed_warp_template, method = cv2.RANSAC, ransacReprojThreshold = 100)[0]
 	cropped = cv2.warpAffine(image, affine_matrix, crop_size, borderMode = cv2.BORDER_REPLICATE, flags = cv2.INTER_AREA)
 	return cropped, affine_matrix
