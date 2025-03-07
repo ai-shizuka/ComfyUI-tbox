@@ -6,9 +6,8 @@ import argparse
 import cv2
 import numpy as np
 import onnxruntime
-#from affine import create_box_mask, warp_face_by_landmark, paste_back, blend_frame
 
-class GFPGANOnnx:
+class GFPGAN:
     def __init__(self, model_path, providers):
         self.session  = onnxruntime.InferenceSession(model_path, providers=providers)
         inputs = self.session.get_inputs()
@@ -47,17 +46,15 @@ class GFPGANOnnx:
         return output
 
 if __name__ == "__main__":
-    from yoloface_onnx import YoloFaceOnnx
-    from facefusion.affine import create_box_mask, warp_face_by_landmark, paste_back, blend_frame
+    from .yoloface import YoloFace
+    from facefusion.affine import ffhq_512, warp_face_by_landmark, create_box_mask, paste_back, blend_frame
     
     providers=['CPUExecutionProvider']
     model_path = '/Users/wadahana/workspace/AI/sd/ComfyUI/models/facefusion/gfpgan_1.4.onnx'
     yolo_path = '/Users/wadahana/workspace/AI/sd/ComfyUI/models/facefusion/yoloface_8n.onnx'
     
-    detector = YoloFaceOnnx(model_path=yolo_path, providers=providers)
-    session = GFPGANOnnx(model_path=model_path, providers=providers)
-
-   
+    detector = YoloFace(model_path=yolo_path, providers=providers)
+    session = GFPGAN(model_path=model_path, providers=providers)
 
     image = cv2.imread('/Users/wadahana/Desktop/oo1.png')
 
@@ -66,7 +63,7 @@ if __name__ == "__main__":
     
     output = image
     for index, face in enumerate(face_list):
-        cropped, affine_matrix = warp_face_by_landmark(image, face.landmarks, session.input_size)
+        cropped, affine_matrix = warp_face_by_landmark(image, face[1], ffhq_512, session.input_size)
         box_mask = create_box_mask(session.input_size, 0.3, (0,0,0,0))
         crop_mask = np.minimum.reduce([box_mask]).clip(0, 1)
         result = session.run(cropped)

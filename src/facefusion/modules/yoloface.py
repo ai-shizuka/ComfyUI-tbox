@@ -12,7 +12,7 @@ Face = namedtuple('Face',
 	'scores',
 ])
  
-class YoloFaceOnnx:
+class YoloFace:
     def __init__(self, model_path, providers):
         self.session = onnxruntime.InferenceSession(model_path, providers=providers)
         inputs = self.session.get_inputs()
@@ -26,7 +26,6 @@ class YoloFaceOnnx:
         return img
         
     def post_process(self, size, bounding_box_list, face_landmark_5_list, score_list):
-  
         sort_indices = np.argsort(-np.array(score_list))
         bounding_box_list = [ bounding_box_list[index] for index in sort_indices ]
         face_landmark_5_list = [face_landmark_5_list[index] for index in sort_indices]
@@ -39,10 +38,10 @@ class YoloFaceOnnx:
             face_landmark = face_landmark_5_list[index]
             score = score_list[index],
             #print(f'bounding_box  >> : {bounding_box}')
-            face_list.append(Face(
-				bounding_box = self.expand_bounding_box(size, bounding_box),
-				landmarks = face_landmark,
-				scores = score,
+            face_list.append((
+				self.expand_bounding_box(size, bounding_box),
+				face_landmark,
+				score,
 			))
         return face_list
             
@@ -121,6 +120,7 @@ if __name__ == "__main__":
     from liveportrait.utils.landmark_runner import draw_landmarks
     from liveportrait.utils.video import images2video
     from rich.progress import track
+    
     def test_image(detector):
         image = cv2.imread('/Users/wadahana/Desktop/test4.jpg')
         face_list = detector.detect(image=image, conf=0.7)
@@ -187,8 +187,8 @@ if __name__ == "__main__":
             frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
             face_list = detector.detect(image=frame, conf=0.7)
             face = face_list[0]
-            frame = draw_landmarks(frame, face.landmarks)
-            x1, y1, x2, y2 = map(int, face.bounding_box)
+            frame = draw_landmarks(frame, face[1])
+            x1, y1, x2, y2 = map(int, face[0])
             #(x1, y1, x2, y2) = adjust_bounding_box(bbox=face.bounding_box, width=width, height=height, dsize=512)
             face_crop = frame[y1:y2, x1:x2]
             resized_face = cv2.resize(face_crop, (512, 512))
@@ -205,6 +205,6 @@ if __name__ == "__main__":
     model_path = '../../../models/facefusion/yoloface_8n.onnx'
     providers=['CPUExecutionProvider', 'CoreMLExecutionProvider', 'CUDAExecutionProvider']
    
-    detector = YoloFaceOnnx(model_path=model_path, providers=providers)
+    detector = YoloFace(model_path=model_path, providers=providers)
     test_video(detector)
     print('test yoloface_onnx finished! ')
