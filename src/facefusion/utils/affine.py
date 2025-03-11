@@ -30,18 +30,6 @@ def warp_face_by_landmark(image , face_landmark_5, warp_template, crop_size):
 	return cropped, affine_matrix
 
 
-def create_box_mask(crop_size, face_mask_blur, face_mask_padding):
-    blur_amount = int(crop_size[0] * 0.5 * face_mask_blur)
-    blur_area = max(blur_amount // 2, 1)
-    box_mask = np.ones(crop_size, np.float32)
-    box_mask[:max(blur_area, int(crop_size[1] * face_mask_padding[0] / 100)), :] = 0
-    box_mask[-max(blur_area, int(crop_size[1] * face_mask_padding[2] / 100)):, :] = 0
-    box_mask[:, :max(blur_area, int(crop_size[0] * face_mask_padding[3] / 100))] = 0
-    box_mask[:, -max(blur_area, int(crop_size[0] * face_mask_padding[1] / 100)):] = 0
-    if blur_amount > 0:
-        box_mask = cv2.GaussianBlur(box_mask, (0, 0), blur_amount * 0.25)
-    return box_mask
-
 def paste_back(image, cropped, crop_mask, affine_matrix):
     inverse_matrix = cv2.invertAffineTransform(affine_matrix)
     temp_size = image.shape[:2][::-1]
@@ -53,7 +41,7 @@ def paste_back(image, cropped, crop_mask, affine_matrix):
     paste_vision_frame[:, :, 2] = inverse_mask * inverse_vision_frame[:, :, 2] + (1 - inverse_mask) * image[:, :, 2]
     return paste_vision_frame
 
-def blend_frame(temp_vision_frame , paste_vision_frame, blend ):
+def blend_frame(origin_image , new_image, blend ):
 	face_enhancer_blend = 1 - (blend)
-	temp_vision_frame = cv2.addWeighted(temp_vision_frame, face_enhancer_blend, paste_vision_frame, 1 - face_enhancer_blend, 0)
+	temp_vision_frame = cv2.addWeighted(origin_image, face_enhancer_blend, new_image, blend, 0)
 	return temp_vision_frame

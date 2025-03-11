@@ -8,16 +8,7 @@ import numpy as np
 import onnx
 import onnxruntime
 from functools import lru_cache
-
-def split_into_tiles(image, total_tiles, model_size):
-    image = image.reshape(model_size[0], total_tiles, model_size[1], total_tiles, 3)
-    image = image.transpose(1, 3, 0, 2, 4).reshape(total_tiles ** 2, model_size[0], model_size[1], 3)
-    return image
-
-def merge_from_tiles(image, total_tiles, model_size, dsize):
-    image = np.stack(image, axis = 0).reshape(total_tiles, total_tiles, model_size[0], model_size[1], 3)
-    image = image.transpose(2, 0, 3, 1, 4).reshape(dsize[0], dsize[1], 3)
-    return image
+from facefusion.utils.tiles import split_into_tiles, merge_from_tiles
 
 class InSwapper:
     def __init__(self, model_path, providers):
@@ -72,9 +63,7 @@ class InSwapper:
             inputs['source'] = source 
             result = self.session.run(None, inputs)
             output = self.post_process(result[0][0])
-            print(f'output.shape: {target_frames.shape}')
             results.append(output)
-#        print(f'results.shape: {results.shape}')
         output = merge_from_tiles(results, total_tiles=total_tiles, model_size=self.target_size, dsize=target.shape)
         return output
 
@@ -82,7 +71,8 @@ class InSwapper:
 if __name__ == "__main__":
 #    from liveportrait.utils.landmark_runner import draw_landmarks
     from liveportrait.utils.video import images2video
-    from facefusion.affine import arcface_128_v2, warp_face_by_landmark, create_box_mask, paste_back, blend_frame
+    from facefusion.utils.affine import arcface_128_v2, warp_face_by_landmark, paste_back, blend_frame
+    from facefusion.utils.mask import create_bbox_mask
     from rich.progress import track
     from .yoloface import YoloFace
     from .arcface import ArcFaceW600k
@@ -114,12 +104,41 @@ if __name__ == "__main__":
         
         cv2.imwrite('../output_swapi.jpg', output)
         
-        box_mask = create_box_mask((256, 256), 0.3, (0,0,0,0))
+        box_mask = create_bbox_mask((256, 256), 0.3, (0,0,0,0))
         crop_mask = np.minimum.reduce([box_mask]).clip(0, 1)
         output = paste_back(target, output, crop_mask, affine)
         cv2.imwrite('../output_swapi2.jpg', output)
         
-    providers = ['CPUExecutionProvider']
+    def test_video(yolo, recognizer, inswapper):
+        #source_input_path = f'../assets/risa_1.jpg'
+        source_input_path = "/Users/wadahana/workspace/AI/sd/ComfyUI/input/test3.jpg"
+        taregt_input_path = "/Users/wadahana/Desktop/live-motion2.mp4"
+        source = cv2.imread(source_input_path)
+        source_embedding = calc_face_embedding(source, yolo, recognizer)
+        
+        cap = cv2.VideoCapture(taregt_input_path)
+        fps = cap.get(cv2.CAP_PROP_FPS)  # 获取视频帧率
+        total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))  # 获取视频宽度
+        height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))  # 获取视频高度
+        
+        
+        results = []
+        #while True:
+        for i in track(range(total), description='Detecting....', transient=True):
+            ret, frame = cap.read()
+            if not ret:
+                break
+            face, affine = crop_face(frame, yolo, (256, 256))
+            output = inswapper.swap(source_embedding[0], face)
+            box_mask = create_bbox_mask((256, 256), 0.3, (0,0,0,0))
+            crop_mask = np.minimum.reduce([box_mask]).clip(0, 1)
+            output = paste_back(frame, output, crop_mask, affine)
+            results.append(output)
+        images2video(results, wfp='../output_inswapper.mp4', fps=fps)
+        cap.release()
+        
+    providers = ['CoreMLExecutionProvider']
     yolo_path = '../../../models/facefusion/yoloface_8n.onnx'
     inswapper_path = '../../../models/facefusion/inswapper_128.onnx'
     arcface_w600k_path = '../../../models/facefusion/arcface_w600k_r50.onnx'
@@ -129,4 +148,4 @@ if __name__ == "__main__":
     yolo = YoloFace(model_path=yolo_path, providers=providers)
     inswapper = InSwapper(model_path=inswapper_path, providers=providers)
     arcface = ArcFaceW600k(model_path=arcface_w600k_path, providers=providers)
-    test_image(yolo, arcface, inswapper)
+    test_video(yolo, arcface, inswapper)

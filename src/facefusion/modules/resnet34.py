@@ -6,25 +6,8 @@ import argparse
 import cv2
 import numpy as np
 import onnxruntime
-from typing import Any, Dict, List, Literal, Optional, Tuple, TypedDict
-
-FaceMaskRegion = Literal['skin', 'left-eyebrow', 'right-eyebrow', 'left-eye', 'right-eye', 'glasses', 'nose', 'mouth', 'upper-lip', 'lower-lip']
-
-FaceMaskRegionMap : Dict[FaceMaskRegion, int] =\
-{
-    'skin': 1,
-    'left-eyebrow': 2,
-    'right-eyebrow': 3,
-    'left-eye': 4,
-    'right-eye': 5,
-    'glasses': 6,
-    'nose': 10,
-    'mouth': 11,
-    'upper-lip': 12,
-    'lower-lip': 13
-}
-
-FaceMaskAllRegion = ['skin', 'left-eyebrow', 'right-eyebrow', 'left-eye', 'right-eye', 'glasses', 'nose', 'mouth', 'upper-lip', 'lower-lip']
+#from facefusion.utils import FaceMaskRegionMap, FaceMaskAllRegion
+from ..utils.mask import FaceMaskRegionMap, FaceMaskAllRegion
 
 class Resnet34:
     def __init__(self, model_path, providers):
@@ -47,7 +30,7 @@ class Resnet34:
     def post_process(self, output, height, width):
         mask = cv2.resize(output.astype(np.float32), (width, height))
         mask = (cv2.GaussianBlur(mask.clip(0, 1), (0, 0), 5).clip(0.5, 1) - 0.5) * 2
-        return output
+        return mask
     
     def detect(self, image, regions):
         height, width = image.shape[0], image.shape[1]
@@ -58,15 +41,13 @@ class Resnet34:
         output = np.isin(output.argmax(0), [ FaceMaskRegionMap[region] for region in regions ])
         output = self.post_process(output, height, width)
         #print('infer time:',timeit.default_timer()-t)  
-        #output = output.astype(np.uint8)
         return output
 
 
 if __name__ == "__main__":
     
-    from onnx.yoloface import YoloFace
-    # from facefusion.affine import create_box_mask, warp_face_by_landmark, paste_back, blend_frame
-    
+    from .yoloface import YoloFace
+ 
     def test_image(yolo, resnet):
         input_path = '../assets/liuyifei.jpg'
         #input_path = '/Users/wadahana/Desktop/mojing.jpg'

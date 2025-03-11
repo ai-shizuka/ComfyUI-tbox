@@ -22,6 +22,12 @@ def tensor_to_shorts(tensor):
     return tensor_to_int(tensor, 16).astype(np.uint16)
 def tensor_to_bytes(tensor):
     return tensor_to_int(tensor, 8).astype(np.uint8)
+
+def tensor_to_image(tensor):
+    return np.clip(255. * tensor.cpu().numpy().squeeze(), 0, 255).astype(np.uint8)
+def image_to_tensor(image):
+    return torch.from_numpy(image.astype(np.float32) / 255.0).unsqueeze(0)
+
 def tensor2pil(x):
     return Image.fromarray(np.clip(255. * x.cpu().numpy().squeeze(), 0, 255).astype(np.uint8))
 def pil2tensor(image: Image.Image) -> torch.Tensor:

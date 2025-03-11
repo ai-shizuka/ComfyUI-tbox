@@ -25,7 +25,7 @@ class XSeg:
         mask = output.transpose(0, 1, 2).clip(0, 1).astype(np.float32)
         mask = cv2.resize(mask, (width, height))
         mask = (cv2.GaussianBlur(mask.clip(0, 1), (0, 0), 5).clip(0.5, 1) - 0.5) * 2
-        return output
+        return mask
     
     def detect(self, image):
         height, width = image.shape[0], image.shape[1]
@@ -39,9 +39,8 @@ class XSeg:
 
 
 if __name__ == "__main__":
-    from onnx.yoloface import YoloFace
-    # from facefusion.affine import create_box_mask, warp_face_by_landmark, paste_back, blend_frame
-    
+    from .yoloface import YoloFace
+
     def test_image(yolo, xseg):
         #input_path = '../assets/liuyifei.jpg'
         input_path = '/Users/wadahana/Desktop/mojing.jpg'

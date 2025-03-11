@@ -6,7 +6,7 @@ import argparse
 import cv2
 import numpy as np
 import onnxruntime
-from facefusion.affine import arcface_112_v2, warp_face_by_landmark
+from facefusion.utils.affine import arcface_112_v2, warp_face_by_landmark
 
 class ArcFaceW600k:
     def __init__(self, model_path, providers):
@@ -41,7 +41,6 @@ def face_distance(e0, e1):
 if __name__ == "__main__":
     from yoloface import YoloFace
     import itertools
-    # from facefusion.affine import create_box_mask, warp_face_by_landmark, paste_back, blend_frame
     
     def calc_face_embedding(image, yolo, recognizer):
         face_list = yolo.detect(image=image, conf=0.7)

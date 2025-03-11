@@ -117,13 +117,14 @@ class YoloFace:
     
 
 if __name__ == "__main__":
-    from liveportrait.utils.landmark_runner import draw_landmarks
+    from liveportrait.utils.helper import draw_landmarks
     from liveportrait.utils.video import images2video
     from rich.progress import track
     
     def test_image(detector):
-        image = cv2.imread('/Users/wadahana/Desktop/test4.jpg')
+        image = cv2.imread('/Users/wadahana/Desktop/ad_enhance-d77b92ad.png')
         face_list = detector.detect(image=image, conf=0.7)
+        print(f'face_list: {len(face_list)}')
         face = face_list[0]
         #print(f'face: {face}')
         #res = [512, 512]
@@ -133,11 +134,10 @@ if __name__ == "__main__":
         # pt2 = (int(face.bounding_box[2]), int(face.bounding_box[3]))  # 右下角 (x2, y2)
         # cv2.rectangle(image, pt1, pt2, (255, 0, 0), 1)
 
-        x1, y1, x2, y2 = map(int, face.bounding_box)
+        x1, y1, x2, y2 = map(int, face[0])
         face_crop = image[y1:y2, x1:x2]
         resized_face = cv2.resize(face_crop, (512, 512))
         
-        print(f'face_list: {face_list}')
         cv2.imwrite('/Users/wadahana/Desktop/output.jpg', face_crop)
         #cv2.imwrite('/Users/wadahana/Desktop/output_mask_png', crop_mask)
         
@@ -170,8 +170,10 @@ if __name__ == "__main__":
         return (new_x1, new_y1, new_x2, new_y2)
 
     def test_video(detector):
-        from facefusion.affine import create_box_mask, warp_face_by_landmark, paste_back
-        video_input = '../assets/dzq.mp4'
+        from facefusion.utils.affine import warp_face_by_landmark, paste_back
+        #video_input = '../assets/dzq.mp4'
+        
+        video_input = '/Users/wadahana/Desktop/sis/faceswap/test/sq/suck2/suck2-short.mp4'
         cap = cv2.VideoCapture(video_input)
         fps = cap.get(cv2.CAP_PROP_FPS)  # 获取视频帧率
         total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -186,16 +188,19 @@ if __name__ == "__main__":
                 break
             frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
             face_list = detector.detect(image=frame, conf=0.7)
+            if len(face_list) == 0:
+                continue
             face = face_list[0]
             frame = draw_landmarks(frame, face[1])
             x1, y1, x2, y2 = map(int, face[0])
+            cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2) 
             #(x1, y1, x2, y2) = adjust_bounding_box(bbox=face.bounding_box, width=width, height=height, dsize=512)
             face_crop = frame[y1:y2, x1:x2]
             resized_face = cv2.resize(face_crop, (512, 512))
             #frames.append(resized_face)
             #out.write(resized_face)
             
-            frames.append(resized_face)
+            frames.append(frame)
     
         images2video(frames, wfp='../output_yoloface.mp4', fps=fps)
         cap.release()

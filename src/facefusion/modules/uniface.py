@@ -74,9 +74,7 @@ class UniFace:
             inputs['source'] = source 
             result = self.session.run(None, inputs)
             output = self.post_process(result[0][0])
-            print(f'output.shape: {target_frames.shape}')
             results.append(output)
-#        print(f'results.shape: {results.shape}')
         output = merge_from_tiles(results, total_tiles=total_tiles, model_size=self.target_size, dsize=target.shape)
         return output
 
@@ -84,7 +82,8 @@ class UniFace:
 if __name__ == "__main__":
 #    from liveportrait.utils.landmark_runner import draw_landmarks
     from liveportrait.utils.video import images2video
-    from facefusion.affine import ffhq_512, arcface_128_v2, warp_face_by_landmark, create_box_mask, paste_back, blend_frame
+    from facefusion.utils.affine import ffhq_512, arcface_128_v2, warp_face_by_landmark, paste_back, blend_frame
+    from facefusion.utils.mask import create_bbox_mask
     from rich.progress import track
     from .yoloface import YoloFace
     from .arcface import ArcFaceW600k
@@ -117,7 +116,7 @@ if __name__ == "__main__":
         
         cv2.imwrite('../output_swap.jpg', output)
         
-        box_mask = create_box_mask((256, 256), 0.3, (0,0,0,0))
+        box_mask = create_bbox_mask((256, 256), 0.3, (0,0,0,0))
         crop_mask = np.minimum.reduce([box_mask]).clip(0, 1)
         output = paste_back(target, output, crop_mask, affine)
         cv2.imwrite('../output_swap2.jpg', output)

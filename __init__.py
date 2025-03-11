@@ -23,15 +23,20 @@ from .nodes.preprocessor.lineart_node import Lineart_Standard_Preprocessor
 from .nodes.preprocessor.midas_node import MIDAS_Depth_Map_Preprocessor
 from .nodes.preprocessor.dwpose_node import DWPose_Preprocessor, AnimalPose_Preprocessor
 from .nodes.preprocessor.densepose_node import DensePose_Preprocessor
-from .nodes.face.face_enhance_node import GFPGANNode
+from .nodes.face.enhance_node import GFPGANNode
+from .nodes.face.crop_node import FaceCropNode
+from .nodes.face.swap_node import FaceMaskConfigNode, FaceSwapNode
 from .nodes.other.vram_node import PurgeVRAMNode
-from .nodes.prompt.llama_node import LLamaModelNode, LLamaOptionsNode, LLamaCLIPTextEncodeNode
+#from .nodes.prompt.llama_node import LLamaModelNode, LLamaOptionsNode, LLamaCLIPTextEncodeNode
 
 NODE_CLASS_MAPPINGS = {
-    "LLamaModelNode": LLamaModelNode,
-    "LLamaOptionsNode": LLamaOptionsNode,
-    "LLamaCLIPTextEncodeNode": LLamaCLIPTextEncodeNode,
+    # "LLamaModelNode": LLamaModelNode,
+    # "LLamaOptionsNode": LLamaOptionsNode,
+    # "LLamaCLIPTextEncodeNode": LLamaCLIPTextEncodeNode,
     "PurgeVRAMNode": PurgeVRAMNode,
+    "FaceMaskConfigNode": FaceMaskConfigNode,
+    "FaceCropNode": FaceCropNode,
+    "FaceSwapNode": FaceSwapNode,
     "GFPGANNode": GFPGANNode,
     "MaskAddNode": MaskAddNode,
     "ImageLoader": LoadImageNode,
@@ -55,10 +60,14 @@ NODE_CLASS_MAPPINGS = {
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "LLamaModelNode": "LLama Model Loader",
-    "LLamaOptionsNode": "LLama Options",
-    "LLamaCLIPTextEncodeNode": "LLama CLIPTextEncode",
+    # "LLamaModelNode": "LLama Model Loader",
+    # "LLamaOptionsNode": "LLama Options",
+    # "LLamaCLIPTextEncodeNode": "LLama CLIPTextEncode",
     "PurgeVRAMNode":"PurgeVRAMNode",
+
+    "FaceMaskConfigNode": "FaceMaskConfigNode",
+    "FaceCropNode": "FaceCropNode",
+    "FaceSwapNode": "FaceSwapNode",
     "GFPGANNode": "GFPGANNode",
     "MaskAddNode": "MaskAddNode",
     "ImageLoader": "Image Load",

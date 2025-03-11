@@ -3,13 +3,13 @@ import torch
 import cv2
 import numpy as np
 from PIL import Image
-from facefusion.gfpgan_onnx import GFPGANOnnx
-from facefusion.yoloface_onnx import YoloFaceOnnx
-from facefusion.affine import create_box_mask, warp_face_by_landmark, paste_back
+from facefusion.modules.gfpgan import GFPGAN
+from facefusion.modules.yoloface import YoloFace
+from facefusion.utils.mask import create_bbox_mask
+from facefusion.utils.affine import ffhq_512, warp_face_by_landmark, paste_back
 
 import folder_paths
 from ..utils import tensor2pil, pil2tensor
-
 
 class GFPGANNode:
     @classmethod
@@ -39,8 +39,8 @@ class GFPGANNode:
         gfpgan_path = folder_paths.get_full_path("facefusion", f'{model_name}.onnx')
         yolo_path = folder_paths.get_full_path("facefusion", 'yoloface_8n.onnx')
         
-        detector = YoloFaceOnnx(model_path=yolo_path, providers=providers)
-        enhancer = GFPGANOnnx(model_path=gfpgan_path, providers=providers)
+        detector = YoloFace(model_path=yolo_path, providers=providers)
+        enhancer = GFPGAN(model_path=gfpgan_path, providers=providers)
         
         image_list = []
         for i, img in enumerate(images):
@@ -50,8 +50,9 @@ class GFPGANNode:
             output = image
             face_list = detector.detect(image=image, conf=0.7)
             for index, face in enumerate(face_list):
-                cropped, affine_matrix = warp_face_by_landmark(image, face.landmarks, enhancer.input_size)
-                box_mask = create_box_mask(enhancer.input_size, 0.3, (0,0,0,0))
+                landmarks = face[1]
+                cropped, affine_matrix = warp_face_by_landmark(image, landmarks, ffhq_512, enhancer.input_size)
+                box_mask = create_bbox_mask(enhancer.input_size, 0.3, (0,0,0,0))
                 crop_mask = np.minimum.reduce([box_mask]).clip(0, 1)
                 result = enhancer.run(cropped)
                 output = paste_back(output, result, crop_mask, affine_matrix)

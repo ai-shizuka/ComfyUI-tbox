@@ -11,6 +11,8 @@ class GFPGAN:
     def __init__(self, model_path, providers):
         self.session  = onnxruntime.InferenceSession(model_path, providers=providers)
         inputs = self.session.get_inputs()
+        for input in inputs:
+            print(f'GFPGAN >> input: {input.name}, shape: {input.shape}')
         self.input_size = (inputs[0].shape[2], inputs[0].shape[3])
         self.input_name = inputs[0].name
         self.affine = False
@@ -38,7 +40,7 @@ class GFPGAN:
         height, width = image.shape[0], image.shape[1]
         img = self.pre_process(image)
         #t = timeit.default_timer()
-        outputs = self.session.run(None, {self.input_name: img})
+        outputs = self.session.run(None, {'input': img})
         output = outputs[0][0]
         output = self.post_process(output, height, width)
         #print('infer time:',timeit.default_timer()-t)  
@@ -47,11 +49,12 @@ class GFPGAN:
 
 if __name__ == "__main__":
     from .yoloface import YoloFace
-    from facefusion.affine import ffhq_512, warp_face_by_landmark, create_box_mask, paste_back, blend_frame
+    from facefusion.utils.affine import ffhq_512, warp_face_by_landmark, paste_back, blend_frame
+    from facefusion.utils.mask import create_bbox_mask
     
     providers=['CPUExecutionProvider']
-    model_path = '/Users/wadahana/workspace/AI/sd/ComfyUI/models/facefusion/gfpgan_1.4.onnx'
-    yolo_path = '/Users/wadahana/workspace/AI/sd/ComfyUI/models/facefusion/yoloface_8n.onnx'
+    model_path = '../../../models/facefusion/gfpgan_1.4.onnx'
+    yolo_path = '../../../models/facefusion/yoloface_8n.onnx'
     
     detector = YoloFace(model_path=yolo_path, providers=providers)
     session = GFPGAN(model_path=model_path, providers=providers)
@@ -64,7 +67,7 @@ if __name__ == "__main__":
     output = image
     for index, face in enumerate(face_list):
         cropped, affine_matrix = warp_face_by_landmark(image, face[1], ffhq_512, session.input_size)
-        box_mask = create_box_mask(session.input_size, 0.3, (0,0,0,0))
+        box_mask = create_bbox_mask(session.input_size, 0.3, (0,0,0,0))
         crop_mask = np.minimum.reduce([box_mask]).clip(0, 1)
         result = session.run(cropped)
         cv2.imwrite(f'/Users/wadahana/Desktop/output_{index}.jpg', result)
