@@ -8,7 +8,7 @@ import numpy as np
 from insightface.app import FaceAnalysis
 from insightface.app.common import Face
 from liveportrait.utils.timer import Timer
-
+from liveportrait.utils.io import contiguous
 
 def sort_by_direction(faces, direction: str = 'large-small', face_center=None):
     if len(faces) <= 0:
@@ -76,3 +76,66 @@ class FaceAnalysisDIY(FaceAnalysis):
 
         elapse = self.timer.toc()
         print(f'FaceAnalysisDIY warmup time: {elapse:.3f}s')
+
+
+
+
+if __name__ == '__main__':
+    import cv2
+    from rich.progress import track
+    from liveportrait.utils.helper import draw_landmarks
+    from liveportrait.utils.video import images2video
+    
+    def test_image(detecter) :
+        input_path = '../assets/liuyifei.jpg'
+        image = cv2.imread(input_path)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        face_list = detecter.get(img_bgr=contiguous(image[..., ::-1]))
+        face = face_list[0]
+        #print(f'face: {face}')
+        frame = draw_landmarks(frame=image, landmarks=face.landmark_2d_106)
+        x1, y1, x2, y2 = map(int, face.bbox) 
+        cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2) 
+        cv2.imwrite(f'/Users/wadahana/Desktop/output_crop.jpg', frame)
+    
+
+        
+    def test_video(detecter) :
+        video_input = '/Users/wadahana/Desktop/sis/faceswap/test/sq/suck2/suck2-short.mp4'
+        
+        cap = cv2.VideoCapture(video_input)
+        fps = cap.get(cv2.CAP_PROP_FPS)  # 获取视频帧率
+        width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))  # 获取视频宽度
+        height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))  # 获取视频高度
+        total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        frames = []
+        
+        frames = []
+        #while True:
+        for i in track(range(total), description='Detecting....', transient=True):
+            ret, frame = cap.read()
+            if not ret:
+                break
+            frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+            face_list = detecter.get(img_bgr=contiguous(frame[..., ::-1]))
+            if len(face_list) == 0:
+                continue
+            face = face_list[0]
+            frame = draw_landmarks(frame, face.landmark_2d_106)
+            x1, y1, x2, y2 = map(int, face.bbox) 
+            cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2) 
+            frames.append(frame)
+            
+        cap.release()
+        images2video(images=frames, wfp='../output_insightface.mp4', fps=fps)
+   
+    model_path = '../../../models/liveportrait/landmark.onnx'
+    providers = [ "CPUExecutionProvider"] #"CoreMLExecutionProvider",
+    detecter = FaceAnalysisDIY( name="buffalo_l",
+                    root='../../../models/insightface',
+                    providers=providers)
+    detecter.prepare(ctx_id=0, det_size=(512, 512), det_thresh=0.1)
+    detecter.warmup()
+    
+    test_video(detecter)
+    
