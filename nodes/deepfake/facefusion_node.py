@@ -4,14 +4,15 @@ import torch
 import cv2
 import numpy as np
 import folder_paths
-from PIL import Image
 from typing import Literal, List, get_args
-from .__init__ import model_path
+
+from . import model_path
 from ..utils import tensor_to_image, image_to_tensor
-from facefusion.utils.affine import ffhq_512, warp_face_by_landmark, paste_back
+from facefusion.modules.yoloface import YoloFace
 from facefusion.utils.mask import create_bbox_mask, FaceMaskRegion, FaceMaskRegionMap, FaceMaskAllRegion
 from facefusion.faceswap import FaceSwapConfig, FaceSwapper
 from facefusion.facemask import FaceMaskConfig
+
 
         
 class FaceMaskConfigNode:
@@ -60,7 +61,48 @@ class FaceMaskConfigNode:
                 result.append(cleaned)
         return result
 
-                
+
+class FaceSwapCropNode:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "images": ("IMAGE",),
+                "weight": ("FLOAT", {"default": 0.6, "min": 0, "max": 1, "step": 0.05}),
+                "device": (['CPU', 'CUDA', 'CoreML', 'ROCM'], {"default": 'CPU'}),
+            }
+        }
+
+    RETURN_TYPES = ("IMAGE","FF_CROPINFO",)
+    RETURN_NAMES = ("images", "crop_info",)
+    FUNCTION = "crop"
+    CATEGORY = "tbox/FaceFusion"
+
+    def crop(self, images, device='CPU', weight=0.6):
+        providers = ['CPUExecutionProvider']
+        if device== 'CUDA':
+            providers = ['CUDAExecutionProvider', 'CPUExecutionProvider']
+        elif device == 'CoreML':
+            providers = ['CoreMLExecutionProvider', 'CPUExecutionProvider']
+        elif device == 'ROCM':
+            providers = ['ROCMExecutionProvider', 'CPUExecutionProvider']
+        
+        print(f'images.shape: {images.shape}, ')
+        yolo_path = folder_paths.get_full_path("facefusion", 'yoloface_8n.onnx')
+        detector = YoloFace(model_path=yolo_path, providers=providers)
+        
+        crop_info = []
+        for i, img in enumerate(images):
+            # pil = tensor2pil(img)
+            # image = np.ascontiguousarray(pil)
+            # image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+            image = tensor_to_image(img)
+            face_list = detector.detect(image=image, conf=weight)
+            crop_info.append(face_list)
+        return (images, crop_info,)
+
+    
+           
 class FaceSwapNode:
     @classmethod
     def INPUT_TYPES(cls):
@@ -68,7 +110,7 @@ class FaceSwapNode:
             "required": {
                 "source": ("IMAGE",),
                 "targets": ("IMAGE",),
-                "crop_info": ("CROPINFO",),
+                "crop_info": ("FF_CROPINFO",),
                 "mask_cfg": ("MASKCFG",),
                 "model_name": (['inswapper_128', 'uniface_256'], {"default": 'inswapper_128'}),
                 "device": (['CPU', 'CUDA', 'CoreML', 'ROCM'], {"default": 'CPU'}),
