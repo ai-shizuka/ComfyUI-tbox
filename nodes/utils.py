@@ -4,6 +4,7 @@ import torch
 import nodes
 import server
 import folder_paths
+import importlib.util
 import numpy as np
 from typing import Iterable
 from PIL import Image
@@ -33,6 +34,8 @@ def tensor2pil(x):
 def pil2tensor(image: Image.Image) -> torch.Tensor:
     return torch.from_numpy(np.array(image).astype(np.float32) / 255.0).unsqueeze(0)
 
+def is_package_installed(package_name):
+    return importlib.util.find_spec(package_name) is not None
 
 def is_url(url):
     return url.split("://")[0] in ["http", "https"]

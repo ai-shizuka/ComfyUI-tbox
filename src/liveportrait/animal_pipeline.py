@@ -39,6 +39,7 @@ class AnimalPipeline(object):
     def make_motion_template(self, I_lst, **kwargs):
         n_frames = I_lst.shape[0]
         template_dct = {
+            'type': 'animal',
             'n_frames': n_frames,
             'output_fps': kwargs.get('output_fps', 25),
             'motion': [],

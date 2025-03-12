@@ -33,6 +33,7 @@ class HumanPipeline(object):
     def make_motion_template(self, fps, I_lst, c_eyes_lst, c_lip_lst):
         n_frames = I_lst.shape[0]
         template_dct = {
+            'type': 'human',
             'n_frames': n_frames,
             'output_fps': fps,
             'motion': [],
@@ -118,64 +119,7 @@ class HumanPipeline(object):
         print(f'The FPS of template: {fps}')
         
         return self.do_execute(source_rgb_lst, source_crop_info, n_frames, c_d_eyes_lst, c_d_lip_lst, driving_template_dct)
-        
-    # def execute(self, **kwargs):
-        
-    #     fps = kwargs.get('fps', 25),
-    #     source_rgb_lst = kwargs.get('source_rgb_lst', None)
-    #     source_crop_info = kwargs.get('source_crop_info', None)
-    #     driving_rgb_lst = kwargs.get('driving_rgb_lst', None)
-    #     driving_crop_info = kwargs.get('driving_crop_info', None)
-    #     driving_template = kwargs.get('driving_template', None)
-        
-    #     ######## process driving info ########
-    #     flag_is_source_video = False
-    #     flag_is_driving_video = True
-        
-    #     if driving_template != None:
-    #         # NOTE: load from template, it is fast, but the cropping video is None
-    #         print(f"Load from template: {driving_template}, NOT the video, so the cropping video and audio are both NULL.", style='bold green')
-    #         driving_template_dct = load(driving_template)
-    #         c_d_eyes_lst = driving_template_dct['c_eyes_lst'] if 'c_eyes_lst' in driving_template_dct.keys() else driving_template_dct['c_d_eyes_lst'] # compatible with previous keys
-    #         c_d_lip_lst = driving_template_dct['c_lip_lst'] if 'c_lip_lst' in driving_template_dct.keys() else driving_template_dct['c_d_lip_lst']
-    #         driving_n_frames = driving_template_dct['n_frames']
-    #         flag_is_driving_video = True if driving_n_frames > 1 else False
-    #         if flag_is_source_video and flag_is_driving_video:
-    #             n_frames = min(len(source_rgb_lst), driving_n_frames)  # minimum number as the number of the animated frames
-    #         elif flag_is_source_video and not flag_is_driving_video:
-    #             n_frames = len(source_rgb_lst)
-    #         else:
-    #             n_frames = driving_n_frames
-
-    #         # set output_fps
-    #         fps = driving_template_dct.get('output_fps', fps)
-    #         print(f'The FPS of template: {fps}')
-    #     else:
-    #         ######## make motion template ########
-    #         if source_crop_info == None or source_crop_info == None or driving_rgb_lst == None or driving_crop_info == None:
-    #             raise Exception(f"not source or driving files!")
-    #         print("Start making driving motion template...")
-    #         driving_n_frames = len(driving_rgb_lst)
-    #         source_n_frames = len(source_rgb_lst)
-    #         if flag_is_source_video and flag_is_driving_video:
-    #             n_frames = min(source_n_frames, driving_n_frames)  # minimum number as the number of the animated frames
-    #             driving_rgb_lst = driving_rgb_lst[:n_frames]
-    #             driving_crop_info = driving_crop_info[:n_frames]
-    #         elif flag_is_source_video and not flag_is_driving_video:
-    #             n_frames = source_n_frames
-    #         else:
-    #             n_frames = driving_n_frames
-                
-    #         driving_rgb_crop_lst, driving_lmk_crop_lst = driving_crop_info['frame_crop_lst'], driving_crop_info['lmk_crop_lst']
-    #         driving_rgb_crop_256x256_lst = [cv2.resize(_, (256, 256)) for _ in driving_rgb_crop_lst]
-    #         #######################################
-        
-    #         c_d_eyes_lst, c_d_lip_lst = self.live_portrait_wrapper.calc_ratio(driving_lmk_crop_lst)
-    #         I_d_lst = self.live_portrait_wrapper.prepare_videos(driving_rgb_crop_256x256_lst)
-    #         driving_template_dct = self.make_motion_template(I_d_lst, c_d_eyes_lst, c_d_lip_lst, output_fps=fps)
-            
-    #     return self.do_execute(source_rgb_lst, source_crop_info, n_frames, c_d_eyes_lst, c_d_lip_lst, driving_template_dct)
-            
+     
     def do_execute(self, source_rgb_lst, source_crop_info, n_frames, c_d_eyes_lst, c_d_lip_lst, driving_template_dct): 
         inf_cfg = self.live_portrait_wrapper.inference_cfg
         device = self.live_portrait_wrapper.device
