@@ -67,11 +67,6 @@ class HumanPipeline(object):
         return template_dct
     
     def calc_driving_template(self, fps, source_rgb_lst, source_crop_info, driving_rgb_lst, driving_crop_info):
-        # fps = kwargs.get('fps', 25),
-        # source_rgb_lst = kwargs.get('source_rgb_lst', None)
-        # source_crop_info = kwargs.get('source_crop_info', None)
-        # driving_rgb_lst = kwargs.get('driving_rgb_lst', None)
-        # driving_crop_info = kwargs.get('driving_crop_info', None)
         
         ######## process driving info ########
         flag_is_source_video = False
