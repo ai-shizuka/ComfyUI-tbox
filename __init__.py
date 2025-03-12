@@ -27,7 +27,7 @@ from .nodes.preprocessor.midas_node import MIDAS_Depth_Map_Preprocessor
 from .nodes.preprocessor.dwpose_node import DWPose_Preprocessor, AnimalPose_Preprocessor
 from .nodes.preprocessor.densepose_node import DensePose_Preprocessor
 from .nodes.deepfake.enhance_node import GFPGANNode
-from .nodes.deepfake.liveportait_node import LivePortraitHumanCropNode, LivePortraitDrivingCropNode, LivePortraitHumanMotionNode, LivePortraitHumanAnimateNode
+from .nodes.deepfake.liveportait_node import LivePortraitSourceCropNode, LivePortraitDrivingCropNode, LivePortraitMotionNode, LivePortraitAnimateNode
 from .nodes.deepfake.facefusion_node import FaceMaskConfigNode, FaceSwapCropNode, FaceSwapNode
 from .nodes.other.vram_node import PurgeVRAMNode
 #from .nodes.prompt.llama_node import LLamaModelNode, LLamaOptionsNode, LLamaCLIPTextEncodeNode
@@ -37,10 +37,10 @@ NODE_CLASS_MAPPINGS = {
     # "LLamaOptionsNode": LLamaOptionsNode,
     # "LLamaCLIPTextEncodeNode": LLamaCLIPTextEncodeNode,
     "PurgeVRAMNode": PurgeVRAMNode,
-    "LivePortraitHumanCropNode": LivePortraitHumanCropNode,
+    "LivePortraitSourceCropNode": LivePortraitSourceCropNode,
     "LivePortraitDrivingCropNode": LivePortraitDrivingCropNode,
-    "LivePortraitHumanMotionNode": LivePortraitHumanMotionNode,
-    "LivePortraitHumanAnimateNode": LivePortraitHumanAnimateNode,
+    "LivePortraitMotionNode": LivePortraitMotionNode,
+    "LivePortraitAnimateNode": LivePortraitAnimateNode,
     "FaceMaskConfigNode": FaceMaskConfigNode,
     "FaceSwapCropNode": FaceSwapCropNode,
     "FaceSwapNode": FaceSwapNode,
@@ -71,10 +71,10 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     # "LLamaOptionsNode": "LLama Options",
     # "LLamaCLIPTextEncodeNode": "LLama CLIPTextEncode",
     "PurgeVRAMNode":"PurgeVRAMNode",
-    "LivePortraitHumanCropNode": "LivePortraitHumanCropNode",
+    "LivePortraitSourceCropNode": "LivePortraitSourceCropNode",
     "LivePortraitDrivingCropNode": "LivePortraitDrivingCropNode",
-    "LivePortraitHumanMotionNode": "LivePortraitHumanMotionNode",
-    "LivePortraitHumanAnimateNode": "LivePortraitHumanAnimateNode",
+    "LivePortraitMotionNode": "LivePortraitMotionNode",
+    "LivePortraitAnimateNode": "LivePortraitAnimateNode",
     "FaceMaskConfigNode": "FaceMaskConfigNode",
     "FaceSwapCropNode": "FaceSwapCropNode",
     "FaceSwapNode": "FaceSwapNode",

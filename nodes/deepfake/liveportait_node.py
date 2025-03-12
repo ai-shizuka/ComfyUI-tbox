@@ -101,7 +101,7 @@ class LivePortraitDrivingCropNode:
         crop_info = cropper.crop_driving(frames)
         return (images, crop_info,)
 
-class LivePortraitHumanMotionNode:
+class LivePortraitMotionNode:
     @classmethod
     def INPUT_TYPES(cls):
         return {
@@ -145,7 +145,7 @@ class LivePortraitHumanMotionNode:
             driving_crop_info=driving_crop_info)
         return (driving_template,)
 
-class LivePortraitHumanAnimateNode:
+class LivePortraitAnimateNode:
     @classmethod
     def INPUT_TYPES(cls):
         return {
