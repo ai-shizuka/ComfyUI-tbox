@@ -29,11 +29,12 @@ class HumanPipeline(object):
     def __init__(self, inference_cfg: InferenceConfig):
         self.live_portrait_wrapper: HumanWrapper = HumanWrapper(inference_cfg=inference_cfg)
     
-    def make_motion_template(self, I_lst, c_eyes_lst, c_lip_lst, **kwargs):
+    
+    def make_motion_template(self, fps, I_lst, c_eyes_lst, c_lip_lst):
         n_frames = I_lst.shape[0]
         template_dct = {
             'n_frames': n_frames,
-            'output_fps': kwargs.get('output_fps', 25),
+            'output_fps': fps,
             'motion': [],
             'c_eyes_lst': [],
             'c_lip_lst': [],
@@ -65,81 +66,120 @@ class HumanPipeline(object):
 
         return template_dct
     
-    def export_motion_template(self, driving_rgb_lst, driving_crop_info, fps, wfp_template):
-        
-        print("Start making driving motion template...")
-        driving_n_frames = len(driving_rgb_lst)
-        n_frames = driving_n_frames
-        
-        driving_rgb_crop_lst, driving_lmk_crop_lst = driving_crop_info['frame_crop_lst'], driving_crop_info['lmk_crop_lst']
-        driving_rgb_crop_256x256_lst = [cv2.resize(_, (256, 256)) for _ in driving_rgb_crop_lst]
-        
-        #######################################
-    
-        c_d_eyes_lst, c_d_lip_lst = self.live_portrait_wrapper.calc_ratio(driving_lmk_crop_lst)
-        I_d_lst = self.live_portrait_wrapper.prepare_videos(driving_rgb_crop_256x256_lst)
-        driving_template_dct = self.make_motion_template(I_d_lst, c_d_eyes_lst, c_d_lip_lst, output_fps=fps)
-    
-        dump(wfp_template, driving_template_dct)
-        print(f"Dump motion template to {wfp_template}")
-    
-
-    def execute(self, **kwargs):
-        
-        fps = kwargs.get('fps', 25),
-        source_rgb_lst = kwargs.get('source_rgb_lst', None)
-        source_crop_info = kwargs.get('source_crop_info', None)
-        driving_rgb_lst = kwargs.get('driving_rgb_lst', None)
-        driving_crop_info = kwargs.get('driving_crop_info', None)
-        driving_template = kwargs.get('driving_template', None)
+    def calc_driving_template(self, fps, source_rgb_lst, source_crop_info, driving_rgb_lst, driving_crop_info):
+        # fps = kwargs.get('fps', 25),
+        # source_rgb_lst = kwargs.get('source_rgb_lst', None)
+        # source_crop_info = kwargs.get('source_crop_info', None)
+        # driving_rgb_lst = kwargs.get('driving_rgb_lst', None)
+        # driving_crop_info = kwargs.get('driving_crop_info', None)
         
         ######## process driving info ########
         flag_is_source_video = False
         flag_is_driving_video = True
         
-        if driving_template != None:
-            # NOTE: load from template, it is fast, but the cropping video is None
-            print(f"Load from template: {driving_template}, NOT the video, so the cropping video and audio are both NULL.", style='bold green')
-            driving_template_dct = load(driving_template)
-            c_d_eyes_lst = driving_template_dct['c_eyes_lst'] if 'c_eyes_lst' in driving_template_dct.keys() else driving_template_dct['c_d_eyes_lst'] # compatible with previous keys
-            c_d_lip_lst = driving_template_dct['c_lip_lst'] if 'c_lip_lst' in driving_template_dct.keys() else driving_template_dct['c_d_lip_lst']
-            driving_n_frames = driving_template_dct['n_frames']
-            flag_is_driving_video = True if driving_n_frames > 1 else False
-            if flag_is_source_video and flag_is_driving_video:
-                n_frames = min(len(source_rgb_lst), driving_n_frames)  # minimum number as the number of the animated frames
-            elif flag_is_source_video and not flag_is_driving_video:
-                n_frames = len(source_rgb_lst)
-            else:
-                n_frames = driving_n_frames
-
-            # set output_fps
-            fps = driving_template_dct.get('output_fps', fps)
-            print(f'The FPS of template: {fps}')
+        ######## make motion template ########
+        if source_rgb_lst == None or source_crop_info == None or driving_rgb_lst == None or driving_crop_info == None:
+            raise Exception(f"not source or driving files!")
+        print("Start making driving motion template...")
+        driving_n_frames = len(driving_rgb_lst)
+        source_n_frames = len(source_rgb_lst)
+        if flag_is_source_video and flag_is_driving_video:
+            n_frames = min(source_n_frames, driving_n_frames)  # minimum number as the number of the animated frames
+            driving_rgb_lst = driving_rgb_lst[:n_frames]
+            driving_crop_info = driving_crop_info[:n_frames]
+        elif flag_is_source_video and not flag_is_driving_video:
+            n_frames = source_n_frames
         else:
-            ######## make motion template ########
-            if source_crop_info == None or source_crop_info == None or driving_rgb_lst == None or driving_crop_info == None:
-                raise Exception(f"not source or driving files!")
-            print("Start making driving motion template...")
-            driving_n_frames = len(driving_rgb_lst)
-            source_n_frames = len(source_rgb_lst)
-            if flag_is_source_video and flag_is_driving_video:
-                n_frames = min(source_n_frames, driving_n_frames)  # minimum number as the number of the animated frames
-                driving_rgb_lst = driving_rgb_lst[:n_frames]
-                driving_crop_info = driving_crop_info[:n_frames]
-            elif flag_is_source_video and not flag_is_driving_video:
-                n_frames = source_n_frames
-            else:
-                n_frames = driving_n_frames
-                
-            driving_rgb_crop_lst, driving_lmk_crop_lst = driving_crop_info['frame_crop_lst'], driving_crop_info['lmk_crop_lst']
-            driving_rgb_crop_256x256_lst = [cv2.resize(_, (256, 256)) for _ in driving_rgb_crop_lst]
-            #######################################
-        
-            c_d_eyes_lst, c_d_lip_lst = self.live_portrait_wrapper.calc_ratio(driving_lmk_crop_lst)
-            I_d_lst = self.live_portrait_wrapper.prepare_videos(driving_rgb_crop_256x256_lst)
-            driving_template_dct = self.make_motion_template(I_d_lst, c_d_eyes_lst, c_d_lip_lst, output_fps=fps)
+            n_frames = driving_n_frames
             
+        driving_rgb_crop_lst, driving_lmk_crop_lst = driving_crop_info['frame_crop_lst'], driving_crop_info['lmk_crop_lst']
+        driving_rgb_crop_256x256_lst = [cv2.resize(_, (256, 256)) for _ in driving_rgb_crop_lst]
+        #######################################
+    
+        c_d_eyes_lst, c_d_lip_lst = self.live_portrait_wrapper.calc_ratio(driving_lmk_crop_lst)
+        I_d_lst = self.live_portrait_wrapper.prepare_videos(driving_rgb_crop_256x256_lst)
+        driving_template_dct = self.make_motion_template(fps=fps, I_lst=I_d_lst, c_eyes_lst=c_d_eyes_lst, c_lip_lst=c_d_lip_lst)
+        return driving_template_dct
+    
+    def animate(self, fps, source_rgb_lst, source_crop_info, driving_template):
+        ######## process driving info ########
+        flag_is_source_video = False
+        flag_is_driving_video = True
+        
+        driving_template_dct = driving_template
+        c_d_eyes_lst = driving_template_dct['c_eyes_lst'] if 'c_eyes_lst' in driving_template_dct.keys() else driving_template_dct['c_d_eyes_lst'] # compatible with previous keys
+        c_d_lip_lst = driving_template_dct['c_lip_lst'] if 'c_lip_lst' in driving_template_dct.keys() else driving_template_dct['c_d_lip_lst']
+        driving_n_frames = driving_template_dct['n_frames']
+        flag_is_driving_video = True if driving_n_frames > 1 else False
+        if flag_is_source_video and flag_is_driving_video:
+            n_frames = min(len(source_rgb_lst), driving_n_frames)  # minimum number as the number of the animated frames
+        elif flag_is_source_video and not flag_is_driving_video:
+            n_frames = len(source_rgb_lst)
+        else:
+            n_frames = driving_n_frames
+
+        # set output_fps
+        fps = driving_template_dct.get('output_fps', fps)
+        print(f'The FPS of template: {fps}')
+        
         return self.do_execute(source_rgb_lst, source_crop_info, n_frames, c_d_eyes_lst, c_d_lip_lst, driving_template_dct)
+        
+    # def execute(self, **kwargs):
+        
+    #     fps = kwargs.get('fps', 25),
+    #     source_rgb_lst = kwargs.get('source_rgb_lst', None)
+    #     source_crop_info = kwargs.get('source_crop_info', None)
+    #     driving_rgb_lst = kwargs.get('driving_rgb_lst', None)
+    #     driving_crop_info = kwargs.get('driving_crop_info', None)
+    #     driving_template = kwargs.get('driving_template', None)
+        
+    #     ######## process driving info ########
+    #     flag_is_source_video = False
+    #     flag_is_driving_video = True
+        
+    #     if driving_template != None:
+    #         # NOTE: load from template, it is fast, but the cropping video is None
+    #         print(f"Load from template: {driving_template}, NOT the video, so the cropping video and audio are both NULL.", style='bold green')
+    #         driving_template_dct = load(driving_template)
+    #         c_d_eyes_lst = driving_template_dct['c_eyes_lst'] if 'c_eyes_lst' in driving_template_dct.keys() else driving_template_dct['c_d_eyes_lst'] # compatible with previous keys
+    #         c_d_lip_lst = driving_template_dct['c_lip_lst'] if 'c_lip_lst' in driving_template_dct.keys() else driving_template_dct['c_d_lip_lst']
+    #         driving_n_frames = driving_template_dct['n_frames']
+    #         flag_is_driving_video = True if driving_n_frames > 1 else False
+    #         if flag_is_source_video and flag_is_driving_video:
+    #             n_frames = min(len(source_rgb_lst), driving_n_frames)  # minimum number as the number of the animated frames
+    #         elif flag_is_source_video and not flag_is_driving_video:
+    #             n_frames = len(source_rgb_lst)
+    #         else:
+    #             n_frames = driving_n_frames
+
+    #         # set output_fps
+    #         fps = driving_template_dct.get('output_fps', fps)
+    #         print(f'The FPS of template: {fps}')
+    #     else:
+    #         ######## make motion template ########
+    #         if source_crop_info == None or source_crop_info == None or driving_rgb_lst == None or driving_crop_info == None:
+    #             raise Exception(f"not source or driving files!")
+    #         print("Start making driving motion template...")
+    #         driving_n_frames = len(driving_rgb_lst)
+    #         source_n_frames = len(source_rgb_lst)
+    #         if flag_is_source_video and flag_is_driving_video:
+    #             n_frames = min(source_n_frames, driving_n_frames)  # minimum number as the number of the animated frames
+    #             driving_rgb_lst = driving_rgb_lst[:n_frames]
+    #             driving_crop_info = driving_crop_info[:n_frames]
+    #         elif flag_is_source_video and not flag_is_driving_video:
+    #             n_frames = source_n_frames
+    #         else:
+    #             n_frames = driving_n_frames
+                
+    #         driving_rgb_crop_lst, driving_lmk_crop_lst = driving_crop_info['frame_crop_lst'], driving_crop_info['lmk_crop_lst']
+    #         driving_rgb_crop_256x256_lst = [cv2.resize(_, (256, 256)) for _ in driving_rgb_crop_lst]
+    #         #######################################
+        
+    #         c_d_eyes_lst, c_d_lip_lst = self.live_portrait_wrapper.calc_ratio(driving_lmk_crop_lst)
+    #         I_d_lst = self.live_portrait_wrapper.prepare_videos(driving_rgb_crop_256x256_lst)
+    #         driving_template_dct = self.make_motion_template(I_d_lst, c_d_eyes_lst, c_d_lip_lst, output_fps=fps)
+            
+    #     return self.do_execute(source_rgb_lst, source_crop_info, n_frames, c_d_eyes_lst, c_d_lip_lst, driving_template_dct)
             
     def do_execute(self, source_rgb_lst, source_crop_info, n_frames, c_d_eyes_lst, c_d_lip_lst, driving_template_dct): 
         inf_cfg = self.live_portrait_wrapper.inference_cfg
@@ -431,8 +471,10 @@ class HumanPipeline(object):
 
 if __name__ == '__main__':
     from liveportrait.human_cropper import HumanCropper
-    from liveportrait.utils.landmark_runner import draw_landmarks
+    from liveportrait.utils.helper import draw_landmarks
     from rich.progress import track
+    from datetime import datetime
+    
     image_input = "../assets/ami.jpg"
     #image_input = "../assets/liuyifei.jpg"
     video_input = '../assets/dzq.mp4'
@@ -447,9 +489,11 @@ if __name__ == '__main__':
     
     cropConfig = CropConfig()
     inferConfig = InferenceConfig()
-    cropper = HumanCropper(crop_cfg=cropConfig, providers=["CUDAExecutionProvider"])
+    cropper = HumanCropper(crop_cfg=cropConfig, providers=["CPUExecutionProvider"])
     pipeline = HumanPipeline(inference_cfg=inferConfig)
     
+    print(f'{datetime.now()} read video frames start.')
+       
     frames = []
     for i in track(range(total), description='Read Video Frame....', transient=True):
         ret, frame = cap.read()
@@ -457,23 +501,36 @@ if __name__ == '__main__':
             break
         frames.append(frame)
     cap.release()
+    print(f'{datetime.now()} read video frames finished.')
+    
+    print(f'frames.shape: {frames.shape}')
+
     
     image = cv2.imread(image_input)
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     source_crop_info = cropper.crop_source([image])
+    print(f'{datetime.now()} >>>> crop source image finished.')
+    
     driving_crop_info = cropper.crop_driving(frames)
     
-    result = pipeline.execute(source_rgb_lst=[image], source_crop_info=source_crop_info, driving_rgb_lst=frames, driving_crop_info=driving_crop_info, fps=fps)
-    print(f'shape of result: {len(result)}')
+    print(f'{datetime.now()} >>>> crop driving frames finished.')
+    
+    driving_template = pipeline.calc_driving_template(fps=fps, source_rgb_lst=[image], source_crop_info=source_crop_info, driving_rgb_lst=frames, driving_crop_info=driving_crop_info)
+    print(f'{datetime.now()} >>>> calc driving template finished.')
+    
+    result = pipeline.animate(fps=fps, source_rgb_lst=[image], source_crop_info=source_crop_info, driving_template=driving_template)
+    print(f'{datetime.now()} >>>> animate video finished.')
+    #print(f'shape of result: {driving_template.shape}')
 
     frames = []
-    images2video(images=result, wfp=video_output, fps=fps)
+    images2video(images=result, wfp='../output_live.mp4', fps=fps)
     for i in track(range(total), description='Draw Landmarks....', transient=True):
         dst = driving_crop_info['frame_crop_lst'][i]
         lmk = driving_crop_info['lmk_crop_lst'][i]
         frame = draw_landmarks(frame=dst, landmarks=lmk)
         frames.append(frame)
 
+    print(f'{datetime.now()} >>>> draw frames landmarks finished.')
     images2video(images=frames, wfp='../output_crop.mp4', fps=fps)
 
 

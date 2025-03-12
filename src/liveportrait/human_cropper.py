@@ -4,9 +4,9 @@ import numpy as np
 import cv2; cv2.setNumThreads(0); cv2.ocl.setUseOpenCL(False)
 
 from .base_cropper import Trajectory
-from liveportrait.utils.video import images2video
-from liveportrait.utils.face_analysis_diy import FaceAnalysisDIY
-from liveportrait.utils.landmark_runner import HumanLandmarkRunner
+
+from liveportrait.modules.face_analysis_diy import FaceAnalysisDIY
+from liveportrait.modules.landmark_runner_human import LandmarkRunner as HumanLandmarkRunner
 from liveportrait.config.crop_config import CropConfig
 from liveportrait.utils.io import contiguous
 from liveportrait.utils.crop import (
@@ -16,7 +16,6 @@ from liveportrait.utils.crop import (
     parse_bbox_from_landmark,
 )
 
-        
 class HumanCropper(object):
     def __init__(self,  **kwargs) -> None:
         self.device_id = kwargs.get("device_id", 0)
@@ -32,9 +31,8 @@ class HumanCropper(object):
         self.face_analysis_wrapper.warmup()
         
         self.human_landmark_runner = HumanLandmarkRunner(
-            ckpt_path=self.crop_cfg.landmark_ckpt_path,
-            onnx_provider=self.providers,#self.device,
-            device_id=self.device_id,
+            model_path=self.crop_cfg.landmark_ckpt_path,
+            providers=self.providers
         )
         self.human_landmark_runner.warmup()
         
@@ -148,6 +146,7 @@ class HumanCropper(object):
 
             trajectory.frame_rgb_crop_lst.append(ret_dct["img_crop_512x512"])
             trajectory.lmk_crop_lst.append(ret_dct["lmk_crop_512x512"])
+        
         #global_bbox = average_bbox_lst(trajectory.bbox_lst)
 
         # for idx, (frame_rgb, lmk) in enumerate(zip(trajectory.frame_rgb_lst, trajectory.lmk_lst)):
@@ -172,7 +171,8 @@ class HumanCropper(object):
 
 if __name__ == '__main__':
     from rich.progress import track
-    from liveportrait.utils.landmark_runner import draw_landmarks
+    from liveportrait.utils.video import images2video
+    from liveportrait.utils.helper import draw_landmarks
     
     def test_image(input_file, cropper) :
         image = cv2.imread(input)
@@ -204,7 +204,7 @@ if __name__ == '__main__':
         
         results = cropper.crop_driving(frames)
         frames = []
-        
+
         for i in track(range(total), description='Draw Landmarks....', transient=True):
             dst = results['frame_crop_lst'][i]
             lmk = results['lmk_crop_lst'][i]

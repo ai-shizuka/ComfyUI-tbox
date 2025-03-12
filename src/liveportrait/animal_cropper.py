@@ -5,12 +5,9 @@ import cv2; cv2.setNumThreads(0); cv2.ocl.setUseOpenCL(False)
 from PIL import Image
 from .base_cropper import Trajectory
 from .human_cropper import HumanCropper
-from liveportrait.utils.video import images2video
-from liveportrait.utils.face_analysis_diy import FaceAnalysisDIY
 
-from liveportrait.utils.landmark_runner import XPoseRunner as AnimalLandmarkRunner
+from liveportrait.modules.landmark_runner_animal import XPoseRunner as AnimalLandmarkRunner
 from liveportrait.config.crop_config import CropConfig
-from liveportrait.utils.io import contiguous
 from liveportrait.utils.crop import (
     average_bbox_lst,
     crop_image,
@@ -83,8 +80,10 @@ class AnimalCropper(HumanCropper):
     
 
 if __name__ == '__main__':
-    from liveportrait.utils.landmark_runner import draw_landmarks
-    
+    from liveportrait.utils.helper import draw_landmarks
+    from liveportrait.utils.io import contiguous
+    from liveportrait.utils.video import images2video
+
     def test_image(input_file, cropper) :
         image = cv2.imread(input_file)
         #image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)

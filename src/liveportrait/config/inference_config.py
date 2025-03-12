@@ -38,12 +38,12 @@ class InferenceConfig(PrintableConfig):
     checkpoint_G_animal: str = os.path.abspath(os.path.join(models_path,f'liveportrait/animal/spade_generator.safetensors'))  # path to checkpoint of G
     checkpoint_W_animal: str = os.path.abspath(os.path.join(models_path,f'liveportrait/animal/warping_module.safetensors'))  # path to checkpoint of W
     checkpoint_S_animal: str = os.path.abspath(os.path.join(models_path,f'liveportrait/animal/stitching_retargeting_module.safetensors'))  # path to checkpoint to S and R_eyes, R_lip, NOTE: use human temporarily!
-
-
+    
     # EXPORTED PARAMS
     flag_use_half_precision: bool = True
     flag_crop_driving_video: bool = False
     device_id: int = 0
+    device: str = "cpu"
     flag_normalize_lip: bool = True
     flag_source_video_eye_retargeting: bool = False
     flag_eye_retargeting: bool = False
