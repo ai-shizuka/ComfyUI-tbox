@@ -101,8 +101,8 @@ NODE_DISPLAY_NAME_MAPPINGS = {
 }
 
 
-if platform.system() == "Darwin":
-    WEB_DIRECTORY = "./web"
-    __all__ = ["WEB_DIRECTORY", "NODE_CLASS_MAPPINGS", "NODE_DISPLAY_NAME_MAPPINGS"]
-else:
-    __all__ = ["NODE_CLASS_MAPPINGS", "NODE_DISPLAY_NAME_MAPPINGS"]
+#if platform.system() == "Darwin":
+WEB_DIRECTORY = "./web"
+__all__ = ["WEB_DIRECTORY", "NODE_CLASS_MAPPINGS", "NODE_DISPLAY_NAME_MAPPINGS"]
+#else:
+#    __all__ = ["NODE_CLASS_MAPPINGS", "NODE_DISPLAY_NAME_MAPPINGS"]

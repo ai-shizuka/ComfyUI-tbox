@@ -170,22 +170,24 @@ class AnimalPipeline(object):
 
 if __name__ == '__main__':
     from liveportrait.animal_cropper import AnimalCropper
-    image_input = "../assets/shiba.jpg"
+    image_input = "../assets/cat.jpg"
     #image_input = "./assets/liuyifei.jpeg"
-    video_input = '../assets/dzq.mp4'
+    video_input = '../assets/liveportrait.mp4'
     video_output =  '../output.mp4'
     cap = cv2.VideoCapture(video_input)
     fps = cap.get(cv2.CAP_PROP_FPS)  # 获取视频帧率
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))  # 获取视频宽度
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))  # 获取视频高度
+    total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     
     cropConfig = CropConfig()
     inferConfig = InferenceConfig()
-    cropper = AnimalCropper(crop_cfg=cropConfig)
+    inferConfig.device = 'cuda'
+    cropper = AnimalCropper(crop_cfg=cropConfig, providers=["CUDAExecutionProvider"])
     pipeline = AnimalPipeline(inference_cfg=inferConfig)
     
     frames = []
-    for i in range(0, 100):
+    for i in track(range(total), description='Read Video Frame....', transient=True):
         ret, frame = cap.read()
         if not ret:
             break
@@ -201,6 +203,6 @@ if __name__ == '__main__':
    
     result = pipeline.animate(fps=fps, source_rgb_lst=[image], source_crop_info=source_crop_info, driving_template=driving_template)
    
-    print(f'shape of result: {len(result)}')
+    print(f'shape of result: {len(result)},')
 
     images2video(images=result, wfp=video_output, fps=fps)

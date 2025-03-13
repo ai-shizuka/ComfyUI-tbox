@@ -22,7 +22,7 @@ import torch
 import torch.utils.checkpoint as checkpoint
 from torch import nn, Tensor
 from typing import Optional
-from util.misc import inverse_sigmoid
+from liveportrait.modules.XPose.util.misc import inverse_sigmoid
 
 from .transformer_vanilla import TransformerEncoderLayer
 from .fuse_modules import BiAttentionBlock

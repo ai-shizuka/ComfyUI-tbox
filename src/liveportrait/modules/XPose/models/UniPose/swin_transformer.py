@@ -5,7 +5,7 @@ import torch.nn.functional as F
 import torch.utils.checkpoint as checkpoint
 import numpy as np
 
-from util.misc import NestedTensor
+from liveportrait.modules.XPose.util.misc import NestedTensor
 # from timm.models.layers import DropPath, to_2tuple, trunc_normal_
 from timm.models.layers import DropPath,to_2tuple, trunc_normal_ 
 #from src.modules.util import DropPath, to_2tuple, trunc_normal_

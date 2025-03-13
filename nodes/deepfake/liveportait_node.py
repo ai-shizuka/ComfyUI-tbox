@@ -7,6 +7,7 @@ import folder_paths
 
 from . import model_path
 from ..utils import image_to_tensor, tensor_to_image, is_package_installed
+from liveportrait.config.base_config import liveportrait_path
 from liveportrait.config.crop_config import CropConfig
 from liveportrait.config.inference_config import InferenceConfig
 from liveportrait.human_cropper import HumanCropper
@@ -25,6 +26,7 @@ def getOnnxProvidersFromDevice(device):
         providers = ['CoreMLExecutionProvider', 'CPUExecutionProvider']
     elif device == 'ROCM':
         providers = ['ROCMExecutionProvider', 'CPUExecutionProvider']
+    return providers
 
     
 class LivePortraitSourceCropNode:
@@ -47,7 +49,7 @@ class LivePortraitSourceCropNode:
     
     def crop(self, images, type='human', device='CPU'):
         providers = getOnnxProvidersFromDevice(device)
-        liveportrait_path =  os.path.abspath('../../src/liveprotrait')
+
         print(f'liveportrait_path: {liveportrait_path}')
         cropConfig = CropConfig()
         cropConfig.insightface_root = os.path.join(folder_paths.models_dir, "insightface")
@@ -85,15 +87,12 @@ class LivePortraitDrivingCropNode:
 
     def crop(self, images, device='CPU'):
         providers = getOnnxProvidersFromDevice(device)
-        
         liveportrait_path =  os.path.abspath('../../src/liveprotrait')
         print(f'liveportrait_path: {liveportrait_path}')
         
         cropConfig = CropConfig()
         cropConfig.insightface_root = os.path.join(folder_paths.models_dir, "insightface")
         cropConfig.landmark_ckpt_path = os.path.join(folder_paths.models_dir, "liveportrait", 'landmark.onnx')
-        #cropConfig.landmark_ckpt_path = folder_paths.get_full_path("liveportrait", 'landmark.onnx')
-        print(f'cropConfig.landmark_ckpt_path: {cropConfig.landmark_ckpt_path}')
         
         cropper = HumanCropper(crop_cfg=cropConfig, providers=providers)
     
@@ -104,6 +103,9 @@ class LivePortraitDrivingCropNode:
 class LivePortraitMotionNode:
     @classmethod
     def INPUT_TYPES(cls):
+        type_options = ['human']
+        if support_animal:
+            type_options.append('animal')
         return {
             "required": {
                 "source_lst": ("IMAGE",),
@@ -157,7 +159,6 @@ class LivePortraitAnimateNode:
                 "device": (['cpu', 'cuda', 'mps'], {"default": 'cpu'}),
             }
         }
-    #"gfpgan_blend": ("FLOAT", {"default": 0.8, "min": 0, "max": 1, "step": 0.05, "tooltip": "0: disable gfpgan",}),
     RETURN_TYPES = ("IMAGE",)
     RETURN_NAMES = ("images",)
     FUNCTION = "animate"

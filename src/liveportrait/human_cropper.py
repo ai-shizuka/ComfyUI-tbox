@@ -20,7 +20,7 @@ class HumanCropper(object):
     def __init__(self,  **kwargs) -> None:
         self.device_id = kwargs.get("device_id", 0)
         self.providers = kwargs.get("providers", ["CPUExecutionProvider"])
-
+        print(f'HumanCropper >> self.providers: {self.providers}')
         self.crop_cfg: CropConfig = kwargs.get("crop_cfg", None)
         self.face_analysis_wrapper = FaceAnalysisDIY(
                     name="buffalo_l",
@@ -130,36 +130,36 @@ class HumanCropper(object):
             trajectory.bbox_lst.append(bbox)  # bbox
             trajectory.frame_rgb_lst.append(frame_rgb)
 
-            ret_dct = crop_image(
-                frame_rgb,  # ndarray
-                lmk,  # 106x2 or Nx2
-                dsize=self.crop_cfg.dsize,
-                scale=self.crop_cfg.scale,
-                vx_ratio=self.crop_cfg.vx_ratio,
-                vy_ratio=self.crop_cfg.vy_ratio,
-                flag_do_rot=self.crop_cfg.flag_do_rot,
-            )
+            # ret_dct = crop_image(
+            #     frame_rgb,  # ndarray
+            #     lmk,  # 106x2 or Nx2
+            #     dsize=self.crop_cfg.dsize,
+            #     scale=self.crop_cfg.scale,
+            #     vx_ratio=self.crop_cfg.vx_ratio,
+            #     vy_ratio=self.crop_cfg.vy_ratio,
+            #     flag_do_rot=self.crop_cfg.flag_do_rot,
+            # )
 
-            # update a 512x512 version for network input
-            ret_dct["img_crop_512x512"] = cv2.resize(ret_dct["img_crop"], (512, 512), interpolation=cv2.INTER_AREA)
-            ret_dct["lmk_crop_512x512"] = ret_dct["pt_crop"] * 512 / self.crop_cfg.dsize
+            # # update a 512x512 version for network input
+            # ret_dct["img_crop_512x512"] = cv2.resize(ret_dct["img_crop"], (512, 512), interpolation=cv2.INTER_AREA)
+            # ret_dct["lmk_crop_512x512"] = ret_dct["pt_crop"] * 512 / self.crop_cfg.dsize
 
-            trajectory.frame_rgb_crop_lst.append(ret_dct["img_crop_512x512"])
-            trajectory.lmk_crop_lst.append(ret_dct["lmk_crop_512x512"])
+            # trajectory.frame_rgb_crop_lst.append(ret_dct["img_crop_512x512"])
+            # trajectory.lmk_crop_lst.append(ret_dct["lmk_crop_512x512"])
         
-        #global_bbox = average_bbox_lst(trajectory.bbox_lst)
+        global_bbox = average_bbox_lst(trajectory.bbox_lst)
 
-        # for idx, (frame_rgb, lmk) in enumerate(zip(trajectory.frame_rgb_lst, trajectory.lmk_lst)):
-        #     ret_dct = crop_image_by_bbox(
-        #         frame_rgb,
-        #         global_bbox,
-        #         lmk=lmk,
-        #         dsize=self.crop_cfg.dsize,
-        #         flag_rot=False,
-        #         borderValue=(0, 0, 0),
-        #     )
-        #     trajectory.frame_rgb_crop_lst.append(ret_dct["img_crop"])
-        #     trajectory.lmk_crop_lst.append(ret_dct["lmk_crop"])
+        for idx, (frame_rgb, lmk) in enumerate(zip(trajectory.frame_rgb_lst, trajectory.lmk_lst)):
+            ret_dct = crop_image_by_bbox(
+                frame_rgb,
+                global_bbox,
+                lmk=lmk,
+                dsize=self.crop_cfg.dsize,
+                flag_rot=False,
+                borderValue=(0, 0, 0),
+            )
+            trajectory.frame_rgb_crop_lst.append(ret_dct["img_crop"])
+            trajectory.lmk_crop_lst.append(ret_dct["lmk_crop"])
 
         return {
             "frame_crop_lst": trajectory.frame_rgb_crop_lst,

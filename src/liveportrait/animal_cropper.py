@@ -29,15 +29,14 @@ class AnimalCropper(HumanCropper):
     def crop_source(self, source_rgb_lst):
         """Tracking based landmarks/alignment and cropping"""
         trajectory = Trajectory()
-
+        tmp_dct = {
+                'animal_face_9': 'animal_face',
+                'animal_face_68': 'face'
+            }
+    
         for idx, frame_rgb in enumerate(source_rgb_lst):
+            img_rgb_pil = Image.fromarray(frame_rgb)
             if idx == 0 or trajectory.start == -1:
-                tmp_dct = {
-                    'animal_face_9': 'animal_face',
-                    'animal_face_68': 'face'
-                }
-
-                img_rgb_pil = Image.fromarray(frame_rgb)
                 lmk = self.animal_landmark_runner.run(
                     img_rgb_pil,
                     'face',
@@ -48,7 +47,13 @@ class AnimalCropper(HumanCropper):
                 trajectory.start, trajectory.end = idx, idx
             else:
                 # TODO: add IOU check for tracking
-                lmk = self.human_landmark_runner.run(frame_rgb, trajectory.lmk_lst[-1])
+                lmk = self.animal_landmark_runner.run(
+                    img_rgb_pil,
+                    'face',
+                    tmp_dct[self.crop_cfg.animal_face_type],
+                    0,
+                    0
+                )
                 trajectory.end = idx
 
             trajectory.lmk_lst.append(lmk)
