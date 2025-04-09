@@ -1,9 +1,10 @@
 import os
+import cv2
 import onnx
 import onnxruntime
-import cv2
 import numpy as np
 from collections import namedtuple
+from typing import List, Literal
 
 Face = namedtuple('Face',
 [
@@ -12,6 +13,8 @@ Face = namedtuple('Face',
 	'scores',
 ])
  
+FaceAnalyserOrder = Literal['left-right', 'right-left', 'top-bottom', 'bottom-top', 'small-large', 'large-small', 'best-worst', 'worst-best']
+
 class YoloFace:
     def __init__(self, model_path, providers):
         self.session = onnxruntime.InferenceSession(model_path, providers=providers)
@@ -19,8 +22,20 @@ class YoloFace:
         self.input_size = (inputs[0].shape[2], inputs[0].shape[3])
         self.input_name = inputs[0].name
         
+    def resize_frame_resolution(self, vision_frame , max_resolution):
+        height, width = vision_frame.shape[:2]
+        max_width, max_height = max_resolution
+
+        if height > max_height or width > max_width:
+            scale = min(max_height / height, max_width / width)
+            new_width = int(width * scale)
+            new_height = int(height * scale)
+            return cv2.resize(vision_frame, (new_width, new_height))
+        return vision_frame
+    
     def pre_process(self, image):
-        img = cv2.resize(image, self.input_size)
+        img = np.zeros((self.input_size[0], self.input_size[1], 3))
+        img[:image.shape[0], :image.shape[1], :] = image
         img = (img - 127.5) / 128.0
         img = np.expand_dims(img.transpose(2, 0, 1), axis = 0).astype(np.float32)
         return img
@@ -85,14 +100,16 @@ class YoloFace:
         y2_expanded = min(y2 + expansion, size[0])
         return [x1_expanded, y1_expanded, x2_expanded, y2_expanded]
 
-    def detect(self, image, conf):
-        img = self.pre_process(image)
-        ratio_height = image.shape[0] / img.shape[2]
-        ratio_width = image.shape[1] / img.shape[3]
-        outputs = self.session.run(None, {self.input_name: img})
+    def detect(self, image, conf, order='left-right'):
+        img = self.resize_frame_resolution(image, self.input_size)
+        detect_img = self.pre_process(img)
+        ratio_height = image.shape[0] / img.shape[0]
+        ratio_width = image.shape[1] / img.shape[1]
+        
+        outputs = self.session.run(None, {self.input_name: detect_img})
+        
         outputs = np.squeeze(outputs).T
         bounding_box_raw, score_raw, face_landmark_5_raw = np.split(outputs, [ 4, 5 ], axis = 1)
-        
         bounding_box_list = []
         face_landmark_5_list = []
         score_list = []
@@ -113,8 +130,29 @@ class YoloFace:
                 face_landmark_5_list.append(np.array(face_landmark_5.reshape(-1, 3)[:, :2]))
             score_list = score_raw.ravel().tolist()
         
-        return self.post_process(image.shape, bounding_box_list, face_landmark_5_list, score_list)
+        faces = self.post_process(image.shape, bounding_box_list, face_landmark_5_list, score_list)
+        if len(faces) > 1:
+            faces = self.sort_by_order(faces, order)
+        return faces 
     
+    def sort_by_order(self, faces : List[Face], order : FaceAnalyserOrder) -> List[Face]:
+        if order == 'left-right':
+            return sorted(faces, key = lambda face: face[0][0])
+        if order == 'right-left':
+            return sorted(faces, key = lambda face: face[0][0], reverse = True)
+        if order == 'top-bottom':
+            return sorted(faces, key = lambda face: face[0][1])
+        if order == 'bottom-top':
+            return sorted(faces, key = lambda face: face[0][1], reverse = True)
+        if order == 'small-large':
+            return sorted(faces, key = lambda face: (face[0][2] - face[0][0]) * (face[0][3] - face[0][1]))
+        if order == 'large-small':
+            return sorted(faces, key = lambda face: (face[0][2] - face[0][0]) * (face[0][3] - face[0][1]), reverse = True)
+        if order == 'best-worst':
+            return sorted(faces, key = lambda face: face[2], reverse = True)
+        if order == 'worst-best':
+            return sorted(faces, key = lambda face: face[2])
+        return faces
 
 if __name__ == "__main__":
     from liveportrait.utils.helper import draw_landmarks
@@ -122,23 +160,21 @@ if __name__ == "__main__":
     from rich.progress import track
     
     def test_image(detector):
-        image = cv2.imread('/Users/wadahana/Desktop/ad_enhance-d77b92ad.png')
-        face_list = detector.detect(image=image, conf=0.7)
-        print(f'face_list: {len(face_list)}')
+        #input = '/Users/wadahana/Desktop/ad_enhance-d77b92ad.png'
+        input = "/Users/wadahana/workspace/AI/tbox.ai/data/deep/task/20250405/ec6ee635b4742b08e0fdea6c03769514/source.jpg"
+        image = cv2.imread(input)
+        face_list = detector.detect(image=image, conf=0.5, order='best-worst')
         face = face_list[0]
-        #print(f'face: {face}')
-        #res = [512, 512]
-        # box_mask = create_box_mask(res, 0.3, (0,0,0,0))
-        # crop_mask = np.minimum.reduce([box_mask]).clip(0, 1)
-        # pt1 = (int(face.bounding_box[0]), int(face.bounding_box[1]))  # 左上角 (x1, y1)
-        # pt2 = (int(face.bounding_box[2]), int(face.bounding_box[3]))  # 右下角 (x2, y2)
-        # cv2.rectangle(image, pt1, pt2, (255, 0, 0), 1)
+        res = [512, 512]
+        #box_mask = create_box_mask(res, 0.3, (0,0,0,0))
+        #crop_mask = np.minimum.reduce([box_mask]).clip(0, 1)
+        image = draw_landmarks(image, face[1])
 
         x1, y1, x2, y2 = map(int, face[0])
         face_crop = image[y1:y2, x1:x2]
+        cv2.rectangle(image, (x1,y1), (x2,y2), (255, 0, 0), 1)
         resized_face = cv2.resize(face_crop, (512, 512))
-        
-        cv2.imwrite('/Users/wadahana/Desktop/output.jpg', face_crop)
+        cv2.imwrite('/Users/wadahana/Desktop/output.jpg', image)
         #cv2.imwrite('/Users/wadahana/Desktop/output_mask_png', crop_mask)
         
     def adjust_bounding_box(bbox, width, height, dsize=512):
@@ -194,6 +230,7 @@ if __name__ == "__main__":
             frame = draw_landmarks(frame, face[1])
             x1, y1, x2, y2 = map(int, face[0])
             cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2) 
+
             #(x1, y1, x2, y2) = adjust_bounding_box(bbox=face.bounding_box, width=width, height=height, dsize=512)
             face_crop = frame[y1:y2, x1:x2]
             resized_face = cv2.resize(face_crop, (512, 512))
@@ -211,5 +248,5 @@ if __name__ == "__main__":
     providers=['CPUExecutionProvider', 'CoreMLExecutionProvider', 'CUDAExecutionProvider']
    
     detector = YoloFace(model_path=model_path, providers=providers)
-    test_video(detector)
+    test_image(detector)
     print('test yoloface_onnx finished! ')
