@@ -18,7 +18,7 @@ from liveportrait.utils.camera import get_rotation_matrix
 from liveportrait.utils.video import images2video ## concat_frames, get_fps, add_audio_to_video, has_audio_stream
 from liveportrait.utils.crop import prepare_paste_back, paste_back
 from liveportrait.utils.io import load_image_rgb, load_video, resize_to_limit, dump, load
-from liveportrait.utils.helper import mkdir, basename, dct2device, is_video, is_template, remove_suffix, is_image, calc_motion_multiplier
+from liveportrait.utils.helper import basename, dct2device, is_video, is_template, remove_suffix, is_image, calc_motion_multiplier
 from liveportrait.utils.filter import smooth
 
 # from .utils.viz import viz_lmk
@@ -28,7 +28,6 @@ from liveportrait.wrapper import HumanWrapper
 class HumanPipeline(object):
     def __init__(self, inference_cfg: InferenceConfig):
         self.live_portrait_wrapper: HumanWrapper = HumanWrapper(inference_cfg=inference_cfg)
-    
     
     def make_motion_template(self, fps, I_lst, c_eyes_lst, c_lip_lst):
         n_frames = I_lst.shape[0]
@@ -41,7 +40,7 @@ class HumanPipeline(object):
             'c_lip_lst': [],
         }
 
-        for i in track(range(n_frames), description='Making motion templates...', total=n_frames):
+        for i in range(n_frames):
             # collect s, R, δ and t for inference
             I_i = I_lst[i]
             x_i_info = self.live_portrait_wrapper.get_kp_info(I_i)
@@ -223,7 +222,7 @@ class HumanPipeline(object):
         else:
             print(f"The output of image-driven portrait animation is an image.")
         
-        for i in track(range(n_frames), description='🚀Animating...', total=n_frames):
+        for i in range(n_frames):
             if flag_is_source_video:  # source video
                 x_s_info = source_template_dct['motion'][i]
                 x_s_info = dct2device(x_s_info, device)

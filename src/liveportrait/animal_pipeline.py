@@ -25,7 +25,7 @@ from liveportrait.utils.camera import get_rotation_matrix
 from liveportrait.utils.video import images2video#, concat_frames, get_fps, add_audio_to_video, has_audio_stream, video2gif
 from liveportrait.utils.crop import _transform_img, prepare_paste_back, paste_back
 from liveportrait.utils.io import load_image_rgb, load_video, resize_to_limit, dump, load
-from liveportrait.utils.helper import mkdir, basename, dct2device, is_video, is_template, remove_suffix, is_image, calc_motion_multiplier
+from liveportrait.utils.helper import basename, dct2device, is_video, is_template, remove_suffix, is_image, calc_motion_multiplier
 
 # from .utils.viz import viz_lmk
 from liveportrait.wrapper import AnimalWrapper
@@ -45,7 +45,7 @@ class AnimalPipeline(object):
             'motion': [],
         }
 
-        for i in track(range(n_frames), description='Making driving motion templates...', total=n_frames):
+        for i in range(n_frames):
             # collect s, R, δ and t for inference
             I_i = I_lst[i]
             x_i_info = self.live_portrait_wrapper_animal.get_kp_info(I_i)
@@ -131,7 +131,7 @@ class AnimalPipeline(object):
 
         ######## animate ########
         I_p_lst = []
-        for i in track(range(n_frames), description='🚀Animating...', total=n_frames):
+        for i in range(n_frames):
 
             x_d_i_info = driving_template_dct['motion'][i]
             x_d_i_info = dct2device(x_d_i_info, device)
