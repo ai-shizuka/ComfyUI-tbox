@@ -20,7 +20,7 @@ class HumanCropper(object):
     def __init__(self,  **kwargs) -> None:
         self.device_id = kwargs.get("device_id", 0)
         self.providers = kwargs.get("providers", ["CPUExecutionProvider"])
-        print(f'HumanCropper >> self.providers: {self.providers}')
+
         self.crop_cfg: CropConfig = kwargs.get("crop_cfg", None)
         self.face_analysis_wrapper = FaceAnalysisDIY(
                     name="buffalo_l",
@@ -175,13 +175,13 @@ if __name__ == '__main__':
     from liveportrait.utils.helper import draw_landmarks
     
     def test_image(input_file, cropper) :
-        image = cv2.imread(input)
+        image = cv2.imread(input_file)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         result = cropper.crop_driving([image])
         dst = result['frame_crop_lst'][0]
         lmk = result['lmk_crop_lst'][0]
         frame = draw_landmarks(frame=dst, landmarks=lmk)
-        cv2.imwrite(f'/Users/wadahana/Desktop/output_crop.jpg', frame)
+        cv2.imwrite(f'../output_crop.jpg', frame)
     
 
         
@@ -211,9 +211,10 @@ if __name__ == '__main__':
             frame = draw_landmarks(frame=dst, landmarks=lmk)
             frames.append(frame)
 
-        images2video(images=frames, wfp='../output_crop.mp4', fps=fps)
+        images2video(images=frames, wfp='../output_crop.mp4', fps=fps, image_mode='bgr')
    
+    input = '../assets/dzq.mp4'
     cropConfig = CropConfig()
     cropper = HumanCropper(crop_cfg=cropConfig, providers=["CUDAExecutionProvider"])
-    test_video('../assets/dzq.mp4', cropper)
+    test_video(input, cropper)
     
