@@ -67,7 +67,6 @@ class UniFace:
         source = self.pre_process_source(source)
         target_frames = split_into_tiles(target, total_tiles=total_tiles, model_size=self.target_size)
         results = []
-        print(f'target_frames.shape: {target_frames.shape}')
         for target_frame in target_frames:
             inputs = {}
             inputs['target'] = self.pre_process_target(target_frame)
