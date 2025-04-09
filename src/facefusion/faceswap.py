@@ -51,7 +51,6 @@ class FaceSwapper(object):
         if len(face_list) <= 0:
             raise RuntimeError("no source face detected!")
 
-        #print(f'crop_info 1 >>> : {crop_info}')
         if len(crop_info) == 0:
             return target
         

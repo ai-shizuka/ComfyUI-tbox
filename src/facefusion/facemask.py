@@ -24,13 +24,11 @@ class FaceMaskConfig(PrintableConfig):
 
 class FaceMasker(object):
     def __init__(self, cfg):
-        print(f'face masker config: {cfg}')
         self.cfg = cfg
         if self.cfg.occlusion == True:
             self.xseg = XSeg(os.path.join(self.cfg.model_path, 'dfl_xseg.onnx'), self.cfg.providers)
         if self.cfg.region == True:
             self.resnet = Resnet34(os.path.join(self.cfg.model_path, 'bisenet_resnet_34.onnx'), self.cfg.providers)
-       
     
     def create_mask(self, crop_face):
         mask_list = []
