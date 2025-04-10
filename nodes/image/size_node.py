@@ -4,6 +4,7 @@ import torch
 import comfy.utils
 import numpy as np
 from PIL import Image, ImageSequence, ImageOps
+from ..utils import pil2tensor
 
 class ConstrainImageNode:
     """
@@ -23,10 +24,10 @@ class ConstrainImageNode:
             },
         }
 
+    RETURN_NAMES = ("images",)
     RETURN_TYPES = ("IMAGE",)
     FUNCTION = "constrain_image"
     CATEGORY = "tbox/Image"
-    OUTPUT_IS_LIST = (True,)
 
     def constrain_image(self, images, max_width, max_height, min_width, min_height, crop_if_required):
         crop_if_required = crop_if_required == "yes"
@@ -58,11 +59,9 @@ class ConstrainImageNode:
                 right = min(constrained_width, max_width) + left
                 bottom = min(constrained_height, max_height) + top
                 resized_image = resized_image.crop((left, top, right, bottom))
-
-            resized_image = np.array(resized_image).astype(np.float32) / 255.0
-            resized_image = torch.from_numpy(resized_image)[None,]
-            results.append(resized_image)
                 
+            results.append(pil2tensor(resized_image))
+        results = torch.stack([tensor.squeeze() for tensor in results])             
         return (results,)
     
 # https://github.com/bronkula/comfyui-fitsize
