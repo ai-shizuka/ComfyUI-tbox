@@ -13,9 +13,8 @@ class GFPGAN:
         self.session  = onnxruntime.InferenceSession(model_path, providers=providers)
         inputs = self.session.get_inputs()
         for input in inputs:
-            print(f'GFPGAN >> input: {input.name}, shape: {input.shape}')
-        self.input_size = (inputs[0].shape[2], inputs[0].shape[3])
-        self.input_name = inputs[0].name
+            if input.name == 'input':
+                self.input_size = (inputs[0].shape[2], inputs[0].shape[3])
         self.affine = False
     
     def pre_process(self, image):
