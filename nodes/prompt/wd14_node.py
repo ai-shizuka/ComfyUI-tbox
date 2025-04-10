@@ -3,6 +3,7 @@ import os
 import numpy as np
 from PIL import Image
 from wd14tagger import defaults, known_models, get_installed_models, wait_for_async, tag
+from ..utils import tensor2pil
 
 class WD14Tagger:
     @classmethod
@@ -10,7 +11,7 @@ class WD14Tagger:
         extra = [name for name, _ in (os.path.splitext(m) for m in get_installed_models()) if name not in known_models]
         models = known_models + extra
         return {"required": {
-            "image": ("IMAGE", ),
+            "images": ("IMAGE", ),
             "model": (models, { "default": defaults["model"] }),
             "device": (['CPU', 'CUDA', 'CoreML', 'ROCM'], {"default": 'CPU'}),
             "threshold": ("FLOAT", {"default": defaults["threshold"], "min": 0.0, "max": 1, "step": 0.05}),
@@ -21,15 +22,12 @@ class WD14Tagger:
         }}
 
     RETURN_TYPES = ("STRING",)
-    OUTPUT_IS_LIST = (True,)
     FUNCTION = "process"
     OUTPUT_NODE = True
 
     CATEGORY = f"tbox/Prompt"
 
-    def process(self, image, model, device, threshold, character_threshold, exclude_tags="", replace_underscore=False, trailing_comma=False):
-        tensor = image*255
-        tensor = np.array(tensor, dtype=np.uint8)
+    def process(self, images, model, device, threshold, character_threshold, exclude_tags="", replace_underscore=False, trailing_comma=False):
         providers = ['CPUExecutionProvider']
         if device== 'CUDA':
             providers = ['CUDAExecutionProvider', 'CPUExecutionProvider']
@@ -39,10 +37,11 @@ class WD14Tagger:
             providers = ['ROCMExecutionProvider', 'CPUExecutionProvider']
         
         #pbar = comfy.utils.ProgressBar(tensor.shape[0])
-        tags = []
-        for i in range(tensor.shape[0]):
-            image = Image.fromarray(tensor[i])
-            tags.append(wait_for_async(lambda: tag(image, model, providers, threshold, character_threshold, exclude_tags, replace_underscore, trailing_comma)))
+        tags = ''
+        for i, img in enumerate(images):
+            image = tensor2pil(img) 
+            tags = wait_for_async(lambda: tag(image, model, providers, threshold, character_threshold, exclude_tags, replace_underscore, trailing_comma))
+            #tags.append()
         #    pbar.update(1)
         return (tags,)
         #return {"ui": {"tags": tags}, "result": (tags,)}

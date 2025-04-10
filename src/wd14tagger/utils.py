@@ -34,5 +34,4 @@ def get_extension_config(reload=False):
         return {"name": "Unknown", "version": -1}
     with open(config_path, "r") as f:
         config = json.loads(f.read())
-    print(f'config: {config}')
     return config
