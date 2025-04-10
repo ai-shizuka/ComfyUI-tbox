@@ -44,6 +44,6 @@ class WD14Tagger:
             image = Image.fromarray(tensor[i])
             tags.append(wait_for_async(lambda: tag(image, model, providers, threshold, character_threshold, exclude_tags, replace_underscore, trailing_comma)))
         #    pbar.update(1)
-        return (tags)
+        return (tags,)
         #return {"ui": {"tags": tags}, "result": (tags,)}
 
