@@ -30,12 +30,14 @@ from .nodes.deepfake.enhance_node import GFPGANNode
 from .nodes.deepfake.liveportait_node import LivePortraitSourceCropNode, LivePortraitDrivingCropNode, LivePortraitMotionNode, LivePortraitAnimateNode
 from .nodes.deepfake.facefusion_node import FaceMaskConfigNode, FaceSwapCropNode, FaceSwapNode
 from .nodes.other.vram_node import PurgeVRAMNode
+from .nodes.prompt.wd14_node import WD14Tagger
 #from .nodes.prompt.llama_node import LLamaModelNode, LLamaOptionsNode, LLamaCLIPTextEncodeNode
 
 NODE_CLASS_MAPPINGS = {
     # "LLamaModelNode": LLamaModelNode,
     # "LLamaOptionsNode": LLamaOptionsNode,
     # "LLamaCLIPTextEncodeNode": LLamaCLIPTextEncodeNode,
+    "WD14Tagger": WD14Tagger,
     "PurgeVRAMNode": PurgeVRAMNode,
     "LivePortraitSourceCropNode": LivePortraitSourceCropNode,
     "LivePortraitDrivingCropNode": LivePortraitDrivingCropNode,
@@ -70,6 +72,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     # "LLamaModelNode": "LLama Model Loader",
     # "LLamaOptionsNode": "LLama Options",
     # "LLamaCLIPTextEncodeNode": "LLama CLIPTextEncode",
+    "WD14Tagger": "WD14Tagger",
     "PurgeVRAMNode":"PurgeVRAMNode",
     "LivePortraitSourceCropNode": "LivePortraitSourceCropNode",
     "LivePortraitDrivingCropNode": "LivePortraitDrivingCropNode",
