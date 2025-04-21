@@ -18,21 +18,18 @@ class GFPGAN:
         self.affine = False
     
     def pre_process(self, image):
-        img = cv2.resize(image, self.input_size)
-        img = img/255.0
-        img[:,:,0] = (img[:,:,0]-0.5)/0.5
-        img[:,:,1] = (img[:,:,1]-0.5)/0.5
-        img[:,:,2] = (img[:,:,2]-0.5)/0.5
-        img = np.float32(img[np.newaxis,:,:,:])
-        img = img.transpose(0, 3, 1, 2)
-        return img
+        image = cv2.resize(image, self.input_size)
+        image = image[:, :, ::-1] / 255.0
+        image = (image - 0.5) / 0.5
+        image = np.expand_dims(image.transpose(2, 0, 1), axis = 0).astype(np.float32)
+        return image
 
     def post_process(self, output, height, width):
         output = output.clip(-1,1)
         output = (output + 1) / 2
         output = output.transpose(1, 2, 0)
-       # output = cv2.cvtColor(output, cv2.COLOR_RGB2BGR)
         output = (output * 255.0).round()
+        output = output.astype(np.uint8)[:, :, ::-1]
         output = cv2.resize(output, (width, height))
         return output
 
