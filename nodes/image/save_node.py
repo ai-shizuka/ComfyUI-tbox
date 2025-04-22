@@ -37,7 +37,8 @@ class SaveImageNode:
         filepaht = path.split('\n')[0]
         format = os.path.splitext(filepaht)[1][1:]
         image = images[0] 
-        img = Image.fromarray((255. * image.cpu().numpy()).astype(np.uint8))
+        img = np.clip(image.cpu().numpy(), 0.0, 1.0)
+        img = Image.fromarray((255. * img).astype(np.uint8))
         save_image(img, filepaht, format, quality)
         return {}
         
@@ -61,7 +62,8 @@ class SaveImagesNode:
     def save_image(self, images, path, prefix, format, quality):
         format = format.lower()            
         for i, image in enumerate(images):
-            img = Image.fromarray((255. * image.cpu().numpy()).astype(np.uint8))
+            img = np.clip(image.cpu().numpy(), 0.0, 1.0)
+            img = Image.fromarray((255. * img).astype(np.uint8))
             filepath = self.generate_filename(path, prefix, i, format)
             save_image(img, filepath, format, quality)
         return {}
