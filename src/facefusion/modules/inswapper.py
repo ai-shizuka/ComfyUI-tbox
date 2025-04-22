@@ -123,7 +123,7 @@ if __name__ == "__main__":
         
         
         results = []
-        #while True:
+
         for i in track(range(total), description='Detecting....', transient=True):
             ret, frame = cap.read()
             if not ret:
